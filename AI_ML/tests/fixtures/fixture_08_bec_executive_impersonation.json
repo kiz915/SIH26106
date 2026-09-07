@@ -1,0 +1,17 @@
+{
+  "message_id": "<bec-002@example.com>",
+  "from_address": "m.chen@company.com",
+  "from_display_name": "Michael Chen (CEO)",
+  "reply_to": "mchen_personal@protonmail.com",
+  "to": ["cfo@company.com"],
+  "subject": "Confidential - Wire Transfer Approval Needed",
+  "body_text": "Hi,\n\nI'm in a confidential meeting and need you to process an urgent wire transfer for a strategic acquisition. I cannot discuss details over email for security reasons.\n\nAmount: $89,000 USD\nBeneficiary: Meridian Holdings LLC\nBank: Citibank NA\nAccount: 4401235678\nRouting: 021000089\n\nPlease process this immediately and send confirmation to my personal email: mchen_personal@protonmail.com\n\nDo not forward this email or discuss with anyone else until the transfer is complete.\n\nThanks,\nMichael\n\nSent from my iPhone",
+  "body_html": null,
+  "received_chain": [
+    {"hop": 1, "from_host": "webmail.company.com", "from_ip": "203.0.113.15", "to_host": "mx.company.com", "timestamp": "2026-09-06T14:30:00Z"}
+  ],
+  "auth_results": {"spf": "pass", "dkim": "pass", "dmarc": "pass"},
+  "headers_raw": {"From": "m.chen@company.com", "Subject": "Confidential - Wire Transfer Approval Needed", "Reply-To": "mchen_personal@protonmail.com", "X-Originating-IP": "203.0.113.15"},
+  "urls_in_body": [],
+  "attachments": []
+}

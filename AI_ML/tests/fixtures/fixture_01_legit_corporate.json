@@ -1,0 +1,17 @@
+{
+  "message_id": "<legit-001@example.com>",
+  "from_address": "hr@company.com",
+  "from_display_name": "HR Department",
+  "reply_to": null,
+  "to": ["employee@company.com"],
+  "subject": "Q4 Benefits Enrollment Reminder",
+  "body_text": "Please review and update your benefits selections by December 15th. Log into the HR portal to make changes.",
+  "body_html": null,
+  "received_chain": [
+    {"hop": 1, "from_host": "mail.company.com", "from_ip": "192.168.1.10", "to_host": "mail.employee.com", "timestamp": "2026-09-06T10:00:00Z"}
+  ],
+  "auth_results": {"spf": "pass", "dkim": "pass", "dmarc": "pass"},
+  "headers_raw": {"From": "hr@company.com", "Subject": "Q4 Benefits Enrollment Reminder"},
+  "urls_in_body": [],
+  "attachments": []
+}

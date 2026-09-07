@@ -1,0 +1,18 @@
+{
+  "message_id": "<bec-001@example.com>",
+  "from_address": "invoices@vendor-partner.com",
+  "from_display_name": "Accounts Payable - TechVendor Inc",
+  "reply_to": "payment@vendor-partner.com",
+  "to": ["ap@company.com"],
+  "subject": "Invoice #INV-2026-4498 - Payment Pending",
+  "body_text": "Dear Accounts Payable,\n\nPlease find attached invoice #INV-2026-4498 for services rendered.\n\nAmount Due: $34,200.00\nDue Date: September 15, 2026\n\nBank Transfer Details:\nBank Name: First Republic Bank\nAccount Name: TechVendor Inc\nAccount Number: 4490203847\nRouting Number: 321081669\n\nPlease process this payment at your earliest convenience and send confirmation to payment@vendor-partner.com.\n\nNote: We recently updated our banking information. Please use the new details above for this and all future payments.\n\nThank you,\nSarah Johnson\nAccounts Payable\nTechVendor Inc.\nPhone: (408) 555-0147",
+  "body_html": null,
+  "received_chain": [
+    {"hop": 1, "from_host": "mail.vendor-partner.com", "from_ip": "203.0.113.25", "to_host": "mx.company.com", "timestamp": "2026-09-06T08:00:00Z"},
+    {"hop": 2, "from_host": "mx.company.com", "from_ip": "192.168.5.1", "to_host": "mail.internal.company.com", "timestamp": "2026-09-06T08:01:00Z"}
+  ],
+  "auth_results": {"spf": "pass", "dkim": "pass", "dmarc": "fail"},
+  "headers_raw": {"From": "invoices@vendor-partner.com", "Subject": "Invoice #INV-2026-4498 - Payment Pending", "Reply-To": "payment@vendor-partner.com"},
+  "urls_in_body": [],
+  "attachments": [{"filename": "Invoice_INV-2026-4498.pdf", "content_type": "application/pdf", "size_bytes": 128000}]
+}

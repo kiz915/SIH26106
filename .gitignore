@@ -1,41 +1,30 @@
-# SQLite databases
-*.db
-*.sqlite
-*.sqlite3
-*.db-journal
-*.db-wal
-*.db-shm
+@"
+# ML datasets - DO NOT COMMIT
+AI_ML/data/
 
-# Preserved Evidence Data
-data/
-data/evidence/
-*.eml
-!samples/*.eml
+# Trained models - DO NOT COMMIT
+AI_ML/models/
 
-# Python bytecode and caches
+# Python cache
 __pycache__/
-*.py[cod]
-*$py.class
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Test/tool caches
 .pytest_cache/
-.coverage
-htmlcov/
-.env
+**/.pytest_cache/
+
+# Virtual environments
 .venv/
 venv/
-ENV/
-*.log
+env/
 
-# Next.js frontend artifacts
-frontend/node_modules/
-frontend/.next/
-frontend/out/
+# Environment/secrets
+.env
+*.env
 
-# Blockchain artifacts and secrets
-blockchain/node_modules/
-blockchain/artifacts/
-blockchain/cache/
-blockchain/deployment.json
-blockchain/.env
-blockchain/typechain/
-blockchain/typechain-types/
-blockchain/demo-results.json
+# Jupyter
+.ipynb_checkpoints/
+"@ | Set-Content -Encoding UTF8 .gitignore

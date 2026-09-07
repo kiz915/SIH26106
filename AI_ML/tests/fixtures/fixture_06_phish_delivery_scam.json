@@ -1,0 +1,17 @@
+{
+  "message_id": "<phish-004@example.com>",
+  "from_address": "delivery@fedx-packages.com",
+  "from_display_name": "FedEx Delivery",
+  "reply_to": null,
+  "to": ["recipient@home.com"],
+  "subject": "Your package could not be delivered - action required",
+  "body_text": "FedEx Delivery Notification\n\nDear Customer,\n\nYour package could not be delivered due to an incomplete address. Please click below to reschedule delivery and pay the redelivery fee of $1.99.\n\nReschedule: http://fedex-redelivery.xyz/reschedule?ref=FT67821\n\nFailure to respond within 3 days will result in the package being returned to sender.\n\nPackage ID: PKG-2026-8834\nWeight: 2.3 lbs\n\nFedEx Customer Service",
+  "body_html": null,
+  "received_chain": [
+    {"hop": 1, "from_host": null, "from_ip": "192.0.2.100", "to_host": "mail.home.com", "timestamp": "2026-09-06T06:30:00Z"}
+  ],
+  "auth_results": {"spf": "softfail", "dkim": "fail", "dmarc": "none"},
+  "headers_raw": {"From": "delivery@fedx-packages.com", "Subject": "Your package could not be delivered - action required", "X-Mailer": "SendMail"},
+  "urls_in_body": ["http://fedex-redelivery.xyz/reschedule?ref=FT67821"],
+  "attachments": []
+}
