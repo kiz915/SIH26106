@@ -1,0 +1,30 @@
+From: "CEO Tim Cook" <ceo-executive-update@secure-apple-corporate.com>
+To: finance-ops@target-enterprise.com
+Subject: URGENT: Wire Transfer Authorization - Confidential Acquisition
+Date: Sun, 06 Sep 2026 14:22:18 +0000
+Message-ID: <20260906-urg-9921@secure-apple-corporate.com>
+Return-Path: <bounce-9921@secure-apple-corporate.com>
+Received: from mail-relay.attacker-vps.ru (unknown [185.220.101.45])
+    by mx.target-enterprise.com with ESMTP id 98218129;
+    Sun, 06 Sep 2026 14:22:19 +0000
+Received: from client-gateway.internal (10.0.4.12)
+    by mail-relay.attacker-vps.ru with SMTP id 481021;
+    Sun, 06 Sep 2026 14:22:17 +0000
+Authentication-Results: mx.target-enterprise.com;
+    spf=fail (sender IP 185.220.101.45 is not authorized by domain secure-apple-corporate.com);
+    dkim=fail header.i=@secure-apple-corporate.com;
+    dmarc=fail (p=reject) header.from=secure-apple-corporate.com
+Content-Type: text/plain; charset="UTF-8"
+
+Team,
+
+Please execute an immediate wire transfer of $84,500 to our strategic supplier account below before EOD today.
+Due to strict regulatory confidentiality, do not discuss this confidential transaction with payroll or finance.
+Transfer funds to beneficiary account today.
+
+Beneficiary: Apex Strategic Holdings
+Account: 8829-0192-3819
+Routing Code: 021000021
+
+Regards,
+Tim Cook

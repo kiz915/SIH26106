@@ -21,97 +21,25 @@ import {
 import { listCases, getCaseDetail } from '@/lib/api';
 import { getHistory } from '@/lib/storage';
 
-// Real Forensic Heuristic Triggers aligned with backend/risk_engine.py
-const URGENCY_TRIGGERS = [
-  'urgent',
-  'immediate action required',
-  'account suspended',
-  'verify your account',
-  'security alert',
-  'password expired',
-  'unauthorized access',
-  '24 hours to verify',
-  'failure to respond',
-  'immediately',
-  'confidential'
-];
-
-const FINANCIAL_BEC_TRIGGERS = [
-  'wire transfer',
-  'gift card',
-  'payroll update',
-  'direct deposit',
-  'invoice attached',
-  'overdue invoice',
-  'bank transfer',
-  'crypto',
-  'bitcoin',
-  'confidential transaction',
-  'payment request',
-  'beneficiary account',
-  'routing code'
-];
-
-function evaluateForensicRules(text = '') {
-  if (!text.trim()) {
-    return {
-      classification: 'CLEAN',
-      riskScore: 0,
-      matchedUrgency: [],
-      matchedFinancial: [],
-      totalMatches: 0,
-      tokens: [],
-      summary: 'No adversarial phrasing, urgency markers, or social engineering cues detected.'
-    };
-  }
-
-  const lower = text.toLowerCase();
-  const matchedUrgency = URGENCY_TRIGGERS.filter((kw) => lower.includes(kw));
-  const matchedFinancial = FINANCIAL_BEC_TRIGGERS.filter((kw) => lower.includes(kw));
-
-  let score = 0;
-  if (matchedUrgency.length > 0) score += 15 + Math.min(matchedUrgency.length * 5, 20);
-  if (matchedFinancial.length > 0) score += 20 + Math.min(matchedFinancial.length * 10, 30);
-  score = Math.min(score, 100);
-
-  let classification = 'CLEAN';
-  if (score >= 60) classification = 'CRITICAL BEC / PHISHING';
-  else if (score >= 35) classification = 'HIGH SUSPICION';
-  else if (score >= 15) classification = 'ELEVATED RISK';
-
-  // Tokenize for heatmap
-  const words = text.split(/\s+/);
-  const tokens = words.map((w) => {
-    const clean = w.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const isUrg = URGENCY_TRIGGERS.some((t) => t.includes(clean) && clean.length > 3);
-    const isFin = FINANCIAL_BEC_TRIGGERS.some((t) => t.includes(clean) && clean.length > 3);
-    return {
-      word: w,
-      type: isFin ? 'financial' : isUrg ? 'urgency' : 'neutral'
-    };
-  });
-
-  return {
-    classification,
-    riskScore: score,
-    matchedUrgency,
-    matchedFinancial,
-    totalMatches: matchedUrgency.length + matchedFinancial.length,
-    tokens,
-    summary:
-      score > 0
-        ? `Detected ${matchedUrgency.length} urgency trigger(s) and ${matchedFinancial.length} financial/BEC vector(s). Corresponds directly with forensic risk signals AUTH and NLP heuristics.`
-        : 'All linguistic parameters align with verified corporate baseline communications.'
-  };
-}
 
 export default function MLIntelligencePage() {
   const [inputText, setInputText] = useState(
     'URGENT: Executive Wire Transfer Authorization Required immediately for supplier invoice. Do not disclose this confidential transaction to finance.'
   );
-  const [result, setResult] = useState(() => evaluateForensicRules(inputText));
+  
+  const [result, setResult] = useState({
+    classification: 'CLEAN',
+    riskScore: 0,
+    matchedUrgency: [],
+    matchedFinancial: [],
+    totalMatches: 0,
+    tokens: [],
+    summary: 'Ready for analysis.'
+  });
+  
   const [cases, setCases] = useState([]);
   const [loadingCases, setLoadingCases] = useState(true);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   // Stitch Settings Configuration State
   const [sensitivity, setSensitivity] = useState(75);
@@ -138,8 +66,48 @@ export default function MLIntelligencePage() {
     fetchCases();
   }, []);
 
-  const handleRunInference = () => {
-    setResult(evaluateForensicRules(inputText));
+  const handleRunInference = async () => {
+    if (!inputText.trim()) return;
+    setIsAnalyzing(true);
+    
+    try {
+      const emailContent = `From: tester@local.com\nTo: threat-intel@local.com\nSubject: Inference Test\nDate: Sun, 6 Sep 2026 15:00:00 +0000\n\n${inputText}`;
+      const blob = new Blob([emailContent], { type: 'message/rfc822' });
+      const file = new File([blob], 'threat_test.eml', { type: 'message/rfc822' });
+      
+      const res = await analyzeEmail(file);
+      
+      const riskScore = res?.risk?.score || 0;
+      const classification = res?.risk?.classification || 'CLEAN';
+      const summary = res?.risk?.reasons?.join(' ') || 'Backend analyzed successfully.';
+      
+      // We map the backend signals back to the UI view
+      const urgencySignals = res?.risk?.signals?.filter(s => s.name.includes('URGENCY')) || [];
+      const financialSignals = res?.risk?.signals?.filter(s => s.name.includes('FINANCIAL') || s.name.includes('BEC')) || [];
+      
+      setResult({
+        classification,
+        riskScore,
+        matchedUrgency: urgencySignals.map(s => s.description),
+        matchedFinancial: financialSignals.map(s => s.description),
+        totalMatches: (res?.risk?.signals?.length) || 0,
+        tokens: [], // Not returned by baseline backend yet
+        summary
+      });
+    } catch (e) {
+      console.error("Inference Error:", e);
+      setResult({
+        classification: 'ERROR',
+        riskScore: 0,
+        matchedUrgency: [],
+        matchedFinancial: [],
+        totalMatches: 0,
+        tokens: [],
+        summary: `Analysis failed: ${e.message}`
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleSelectCase = async (caseId) => {
@@ -153,7 +121,6 @@ export default function MLIntelligencePage() {
           '';
         if (body) {
           setInputText(body);
-          setResult(evaluateForensicRules(body));
         }
       }
     } catch {
@@ -174,7 +141,6 @@ export default function MLIntelligencePage() {
         'Hi Team, please find attached the meeting minutes and sprint goals for next week. Let me know if you have any questions.';
     }
     setInputText(text);
-    setResult(evaluateForensicRules(text));
   };
 
   const isHighRisk = result.riskScore >= 60;

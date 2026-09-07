@@ -1,14 +1,12 @@
 'use client';
 
 import { BrainCircuit, AlertTriangle, ShieldCheck } from 'lucide-react';
-import { analyzeMLText } from '@/lib/ml';
 
 export default function MLInsightCard({ mlSignals, emailText }) {
-  const fallback = analyzeMLText(emailText || '');
-  const modelName = mlSignals?.model || fallback.modelName;
-  const classification = mlSignals?.classification || fallback.classification;
-  const confidence = mlSignals?.confidence ?? fallback.confidence;
-  const explanation = mlSignals?.explanation || fallback.explanation;
+  const modelName = mlSignals?.model || 'ThreatLens-Model-Not-Available';
+  const classification = mlSignals?.classification || 'PENDING / CLEAN';
+  const confidence = mlSignals?.confidence ?? 0;
+  const explanation = mlSignals?.explanation || 'No machine learning signals were generated for this sample.';
 
   const isPhishing = classification?.toLowerCase().includes('phishing') || classification?.toLowerCase().includes('bec');
 
@@ -57,7 +55,7 @@ export default function MLInsightCard({ mlSignals, emailText }) {
         <div className="p-3 rounded-lg bg-[var(--surface-container-low)] border border-[var(--border-subtle)]">
           <span className="text-[11px] text-[var(--text-muted)] block font-medium">Flagged Keywords</span>
           <span className="text-sm font-semibold text-[var(--text-primary)]">
-            {fallback.triggerCount ? `${fallback.triggerCount} marker${fallback.triggerCount > 1 ? 's' : ''}` : '0 markers'}
+            {mlSignals ? 'Extracted' : '0 markers'}
           </span>
         </div>
       </div>
