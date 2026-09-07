@@ -1,0 +1,30 @@
+@"
+# ML datasets - DO NOT COMMIT
+AI_ML/data/
+
+# Trained models - DO NOT COMMIT
+AI_ML/models/
+
+# Python cache
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Test/tool caches
+.pytest_cache/
+**/.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment/secrets
+.env
+*.env
+
+# Jupyter
+.ipynb_checkpoints/
+"@ | Set-Content -Encoding UTF8 .gitignore
