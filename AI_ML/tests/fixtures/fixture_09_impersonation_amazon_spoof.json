@@ -1,0 +1,17 @@
+{
+  "message_id": "<impersonation-001@example.com>",
+  "from_address": "security@amazon-verify.com",
+  "from_display_name": "Amazon Customer Service",
+  "reply_to": "amazon-support@tmail.com",
+  "to": ["customer@email.com"],
+  "subject": "Your Amazon order #112-7684321-904 has been placed",
+  "body_text": "Dear Customer,\n\nYour order #112-7684321-904 has been successfully placed and will be shipped within 2 business days.\n\nOrder Total: $1,249.99\nDelivery Address: 123 Main Street, Anytown, USA\n\nIf you did not place this order, please click here immediately to cancel and secure your account: https://amazon-verify.tk/cancel?order=112-7684321-904\n\nThank you for shopping with Amazon.\n\nAmazon Customer Service Team",
+  "body_html": null,
+  "received_chain": [
+    {"hop": 1, "from_host": null, "from_ip": "198.51.100.200", "to_host": "mx.email.com", "timestamp": "2026-09-06T12:00:00Z"}
+  ],
+  "auth_results": {"spf": "fail", "dkim": "none", "dmarc": "fail"},
+  "headers_raw": {"From": "security@amazon-verify.com", "Subject": "Your Amazon order #112-7684321-904 has been placed", "Reply-To": "amazon-support@tmail.com"},
+  "urls_in_body": ["https://amazon-verify.tk/cancel?order=112-7684321-904"],
+  "attachments": []
+}

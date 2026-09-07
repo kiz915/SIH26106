@@ -1,0 +1,15 @@
+{
+  "message_id": "",
+  "from_address": "",
+  "from_display_name": "",
+  "reply_to": null,
+  "to": [],
+  "subject": "",
+  "body_text": "",
+  "body_html": null,
+  "received_chain": [],
+  "auth_results": null,
+  "headers_raw": {},
+  "urls_in_body": [],
+  "attachments": []
+}

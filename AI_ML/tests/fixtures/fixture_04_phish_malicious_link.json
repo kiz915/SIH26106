@@ -1,0 +1,17 @@
+{
+  "message_id": "<phish-002@example.com>",
+  "from_address": "noreply@paypa1.com",
+  "from_display_name": "PayPal",
+  "reply_to": null,
+  "to": ["user@gmail.com"],
+  "subject": "Your PayPal account has been limited",
+  "body_text": "Hello,\n\nWe noticed unusual activity in your PayPal account. We have temporarily limited your account until you confirm your identity.\n\nTo restore full access, please confirm your information at: https://paypa1-secure.com/confirm?id=8834\n\nFailure to confirm within 48 hours will result in permanent account suspension.\n\nThanks,\nPayPal Team\n\nNote: This email was sent to paypal_user@gmail.com",
+  "body_html": null,
+  "received_chain": [
+    {"hop": 1, "from_host": null, "from_ip": "203.0.113.99", "to_host": "aspmx.l.google.com", "timestamp": "2026-09-06T07:45:00Z"}
+  ],
+  "auth_results": {"spf": "none", "dkim": "none", "dmarc": "none"},
+  "headers_raw": {"From": "noreply@paypa1.com", "Subject": "Your PayPal account has been limited", "X-Originating-IP": "203.0.113.99"},
+  "urls_in_body": ["https://paypa1-secure.com/confirm?id=8834"],
+  "attachments": []
+}

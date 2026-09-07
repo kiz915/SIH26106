@@ -1,0 +1,17 @@
+{
+  "message_id": "<phish-003@example.com>",
+  "from_address": "ceo@company-alerts.net",
+  "from_display_name": "CEO John Smith",
+  "reply_to": null,
+  "to": ["accounting@company.com"],
+  "subject": "WIRE TRANSFER REQUIRED - URGENT - DO NOT REPLY",
+  "body_text": "Hi,\n\nI need you to process an emergency wire transfer of $47,500 to a vendor immediately. This is time-sensitive and must be completed today.\n\nPlease do not call me, I am in meetings all day. Just process it and email me confirmation.\n\nVendor details:\nBank: Chase Manhattan\nAccount: 9876543210\nRouting: 111000025\nAmount: $47,500\nReference: Project Phoenix\n\nThis is confidential. Do not share with anyone.\n\nThanks,\nJohn\nSent from my iPhone",
+  "body_html": null,
+  "received_chain": [
+    {"hop": 1, "from_host": null, "from_ip": "45.33.32.156", "to_host": "mail.company.com", "timestamp": "2026-09-06T11:20:00Z"}
+  ],
+  "auth_results": {"spf": "fail", "dkim": "none", "dmarc": "fail"},
+  "headers_raw": {"From": "ceo@company-alerts.net", "Subject": "WIRE TRANSFER REQUIRED - URGENT - DO NOT REPLY"},
+  "urls_in_body": [],
+  "attachments": []
+}

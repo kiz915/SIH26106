@@ -1,0 +1,17 @@
+{
+  "message_id": "<legit-002@example.com>",
+  "from_address": "accounting@vendorcorp.com",
+  "from_display_name": "Accounting",
+  "reply_to": null,
+  "to": ["finance@company.com"],
+  "subject": "URGENT: Invoice #45821 Payment Required Today",
+  "body_text": "Dear Finance Team,\n\nThis is an urgent reminder that invoice #45821 for $12,450.00 is due today. Please process payment immediately to avoid late fees.\n\nPayment details:\nBank: First National\nAccount: 1234567890\nRouting: 987654321\n\nPlease confirm once payment has been sent.\n\nBest regards,\nAccounting Department\nVendorCorp Inc.",
+  "body_html": null,
+  "received_chain": [
+    {"hop": 1, "from_host": "mail.vendorcorp.com", "from_ip": "203.0.113.50", "to_host": "mx.company.com", "timestamp": "2026-09-06T09:30:00Z"}
+  ],
+  "auth_results": {"spf": "pass", "dkim": "pass", "dmarc": "pass"},
+  "headers_raw": {"From": "accounting@vendorcorp.com", "Subject": "URGENT: Invoice #45821 Payment Required Today", "X-Mailer": "Microsoft Outlook"},
+  "urls_in_body": [],
+  "attachments": [{"filename": "invoice_45821.pdf", "content_type": "application/pdf", "size_bytes": 245000}]
+}
