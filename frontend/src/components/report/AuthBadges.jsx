@@ -66,12 +66,12 @@ export default function AuthBadges({ authentication }) {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-[var(--primary-cyan)]" />
-            <h3 className="text-sm font-bold font-mono text-[var(--text-primary)]">
-              Email Authentication Protocol Matrix
+            <h3 className="text-sm font-bold text-[var(--text-primary)]">
+              Email Authentication
             </h3>
           </div>
-          <span className="text-[11px] font-mono text-[var(--text-muted)]">
-            RFC 7208 / 6376 / 7489
+          <span className="text-[11px] text-[var(--text-muted)]">
+            SPF • DKIM • DMARC
           </span>
         </div>
 

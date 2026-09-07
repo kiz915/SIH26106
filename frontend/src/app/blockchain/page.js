@@ -54,28 +54,28 @@ function BlockchainExplorerContent() {
         }
         setCases(caseList);
 
-        // Pick initial case
-        const initialId = paramCaseId || (caseList.length > 0 ? caseList[0].case_id : 'CASE-DEMO');
-        setSelectedCaseId(initialId);
+        if (caseList.length > 0 || paramCaseId) {
+          const initialId = paramCaseId || caseList[0]?.case_id;
+          setSelectedCaseId(initialId);
 
-        // Fetch evidence hash for this case
-        let hash = paramHash;
-        if (!hash && initialId && initialId !== 'CASE-DEMO') {
-          try {
-            const ev = await getCaseEvidence(initialId);
-            if (ev && ev.sha256_hash) {
-              hash = ev.sha256_hash;
+          let hash = paramHash;
+          if (!hash && initialId) {
+            try {
+              const ev = await getCaseEvidence(initialId);
+              if (ev && (ev.sha256_hash || ev.sha256)) {
+                hash = ev.sha256_hash || ev.sha256;
+              }
+            } catch {
+              // fallback
             }
-          } catch {
-            // fallback
           }
-        }
-        if (!hash) {
-          hash = '7fda70245a4913be41d6c6ebbd2eb30019284819280918239019283918293819';
-        }
 
-        setInputQuery(hash);
-        setRecord(deriveBlockchainRecord(initialId, hash));
+          const validHash = hash || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+          setInputQuery(validHash);
+          setRecord(deriveBlockchainRecord(initialId, validHash));
+        } else {
+          setRecord(null);
+        }
       } catch (err) {
         console.warn('Failed to load blockchain cases:', err);
       } finally {
@@ -90,17 +90,15 @@ function BlockchainExplorerContent() {
     let hash = null;
     try {
       const ev = await getCaseEvidence(cId);
-      if (ev && ev.sha256_hash) {
-        hash = ev.sha256_hash;
+      if (ev && (ev.sha256_hash || ev.sha256)) {
+        hash = ev.sha256_hash || ev.sha256;
       }
     } catch {
       // ignore
     }
-    if (!hash) {
-      hash = '7fda70245a4913be41d6c6ebbd2eb30019284819280918239019283918293819';
-    }
-    setInputQuery(hash);
-    setRecord(deriveBlockchainRecord(cId, hash));
+    const validHash = hash || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+    setInputQuery(validHash);
+    setRecord(deriveBlockchainRecord(cId, validHash));
     setVerifyResult(null);
   };
 
@@ -109,7 +107,7 @@ function BlockchainExplorerContent() {
     const isCase = inputQuery.toUpperCase().startsWith('CASE-');
     const newRecord = deriveBlockchainRecord(
       isCase ? inputQuery : (selectedCaseId || `CASE-${inputQuery.slice(0, 8).toUpperCase()}`),
-      isCase ? '7fda70245a4913be41d6c6ebbd2eb30019284819280918239019283918293819' : inputQuery
+      isCase ? 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' : inputQuery
     );
     setRecord(newRecord);
     setVerifyResult(null);
@@ -135,10 +133,30 @@ function BlockchainExplorerContent() {
     window.print();
   };
 
+  if (loading) {
+    return (
+      <div className="p-12 text-center text-xs text-[var(--primary-cyan)]">
+        Loading evidence records...
+      </div>
+    );
+  }
+
   if (!record) {
     return (
-      <div className="p-12 text-center font-mono text-xs text-[var(--primary-cyan)]">
-        Synchronizing with digital evidence ledger...
+      <div className="glass-card p-12 text-center max-w-lg mx-auto my-12">
+        <Blocks className="w-12 h-12 mx-auto text-[var(--text-muted)] mb-3 opacity-50" />
+        <h2 className="text-lg font-bold text-[var(--text-primary)] mb-1">
+          No Evidence Records Yet
+        </h2>
+        <p className="text-xs text-[var(--text-secondary)] mb-6">
+          Analyze an email file to generate an immutable custody record and verify integrity.
+        </p>
+        <Link
+          href="/analyze"
+          className="btn-cyber-primary inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold shadow-md"
+        >
+          Analyze Email
+        </Link>
       </div>
     );
   }
@@ -152,15 +170,15 @@ function BlockchainExplorerContent() {
         className="glass-card p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border-t-2 border-t-[var(--primary-cyan)]"
       >
         <div className="space-y-2 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
             <Blocks className="w-3.5 h-3.5 text-amber-500" />
-            <span>IMMUTABLE EVIDENCE LEDGER</span>
+            <span>EVIDENCE CUSTODY LEDGER</span>
           </div>
-          <h1 className="text-3xl font-black text-[var(--text-primary)] tracking-tight">
-            Blockchain Proof-of-Custody Explorer
+          <h1 className="text-3xl font-bold text-[var(--text-primary)] tracking-tight">
+            Evidence Custody Ledger
           </h1>
           <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-            Tamper-evident verification of raw email forensic digests, Merkle tree cryptographic integrity, and compliance with ISO/IEC 27037 & NIST SP 800-86 standards.
+            Tamper-evident verification of raw email forensic digests, cryptographic hashes, and custody records.
           </p>
         </div>
 
@@ -170,7 +188,7 @@ function BlockchainExplorerContent() {
             className="btn-cyber-primary px-4 py-2.5 rounded-xl text-xs shadow-sm shrink-0"
           >
             <Printer className="w-4 h-4" />
-            <span>PRINT CUSTODY CERTIFICATE</span>
+            <span>Print Certificate</span>
           </button>
         </div>
       </motion.div>
@@ -223,7 +241,7 @@ function BlockchainExplorerContent() {
           </div>
           <button
             onClick={handleSearch}
-            className="px-5 py-2.5 rounded-md font-mono text-xs font-bold bg-[var(--primary-cyan)] text-[#05070b] hover:brightness-110 transition-all shadow-sm cursor-pointer shrink-0"
+            className="px-5 py-2.5 rounded-md text-xs font-bold bg-[var(--primary-cyan)] text-[#05070b] hover:brightness-110 transition-all shadow-sm cursor-pointer shrink-0"
           >
             Query Ledger
           </button>
@@ -240,10 +258,10 @@ function BlockchainExplorerContent() {
                 <FileCheck className="w-5 h-5 text-[var(--primary-cyan)]" />
               </div>
               <div>
-                <h3 className="text-base font-bold font-mono text-[var(--text-primary)]">
-                  Cryptographic Certificate of Digital Custody
+                <h3 className="text-base font-bold text-[var(--text-primary)]">
+                  Evidence Custody Certificate
                 </h3>
-                <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-0.5 font-bold">
+                <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-0.5 font-semibold">
                   <ShieldCheck className="w-3.5 h-3.5" /> Block #{record.blockHeight} • Sealed & Verified
                 </span>
               </div>

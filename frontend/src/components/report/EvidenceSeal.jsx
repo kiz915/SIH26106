@@ -29,22 +29,22 @@ export default function EvidenceSeal({ caseId, evidence, analysisTimestamp }) {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-[var(--text-primary)] font-mono tracking-wide">
-                Digital Evidence Integrity Seal
+              <h3 className="text-sm font-bold text-[var(--text-primary)]">
+                Evidence Integrity Record
               </h3>
               <span className="badge text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1 font-bold">
-                <ShieldCheck className="w-3 h-3" /> IMMUTABLE PROOF
+                <ShieldCheck className="w-3 h-3" /> VERIFIED
               </span>
             </div>
-            <p className="text-xs text-[var(--text-secondary)] font-mono mt-0.5">
-              Evidence ID: <span className="text-[var(--primary-cyan)] font-bold">{evidence?.evidence_id || `EVID-${caseId || 'SAMPLE'}`}</span> • Custody Block #{blockRecord.blockHeight}
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+              Evidence ID: <span className="mono text-[var(--primary-cyan)] font-bold">{evidence?.evidence_id || (caseId ? `EVID-${caseId}` : 'N/A')}</span> • Custody Block #{blockRecord.blockHeight}
             </p>
           </div>
         </div>
 
         <Link
           href={`/blockchain?caseId=${encodeURIComponent(caseId || '')}&hash=${encodeURIComponent(sha256)}`}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold text-[var(--primary-cyan)] bg-[var(--primary-cyan)]/10 hover:bg-[var(--primary-cyan)]/20 border border-[var(--border-cyan)] transition-all self-start sm:self-auto shadow-sm"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[var(--primary-cyan)] bg-[var(--primary-cyan)]/10 hover:bg-[var(--primary-cyan)]/20 border border-[var(--border-cyan)] transition-all self-start sm:self-auto shadow-sm"
         >
           <span>Verify on Ledger</span>
           <ExternalLink className="w-3.5 h-3.5" />

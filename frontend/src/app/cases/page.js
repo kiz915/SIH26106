@@ -105,15 +105,15 @@ export default function CasesPage() {
               <FolderArchive className="w-5 h-5 text-[var(--primary-cyan)]" />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-[var(--text-primary)]">
-                Forensic Case Vault
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text-primary)]">
+                Cases
               </h1>
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="badge text-[10px] bg-[var(--primary-cyan)]/10 text-[var(--primary-cyan)] border border-[var(--border-cyan)] font-bold">
-                  {totalCount} EVIDENCE RECORDS
+                  {totalCount} Total Cases
                 </span>
-                <span className="text-[11px] text-[var(--text-muted)] font-mono flex items-center gap-1">
-                  <Database className="w-3 h-3 text-[var(--primary-cyan)]" /> SQLite Active
+                <span className="text-[11px] text-[var(--text-muted)] flex items-center gap-1">
+                  <Database className="w-3 h-3 text-[var(--primary-cyan)]" /> SQLite Storage
                 </span>
               </div>
             </div>
@@ -135,33 +135,33 @@ export default function CasesPage() {
             <button
               onClick={handleClearLocal}
               className="btn-cyber-destructive px-3.5 py-2 rounded-xl text-xs"
-              title="Purge local cache"
+              title="Clear local browser cache"
             >
               <Trash2 className="w-3.5 h-3.5" />
-              <span>Purge Cache</span>
+              <span>Clear Cache</span>
             </button>
           )}
           <Link
             href="/analyze"
             className="btn-cyber-primary px-4 py-2 rounded-xl text-xs shadow-md"
           >
-            <span>+ Ingest Evidence</span>
+            <span>Analyze Email</span>
           </Link>
         </div>
       </motion.div>
 
-      {/* One Thing Leads: Vault Metric Bar */}
+      {/* Metric Bar */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="glass-card p-4 flex items-center gap-3.5 border-l-4 border-l-[var(--primary-cyan)]">
           <div className="w-10 h-10 rounded-xl bg-[var(--primary-cyan)]/10 flex items-center justify-center shrink-0">
             <Database className="w-5 h-5 text-[var(--primary-cyan)]" />
           </div>
           <div>
-            <div className="text-2xl sm:text-3xl font-black font-mono text-[var(--text-primary)]">
+            <div className="text-2xl sm:text-3xl font-black mono text-[var(--text-primary)]">
               {totalCount}
             </div>
-            <div className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider font-semibold">
-              Persisted Dossiers
+            <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-semibold">
+              Total Cases
             </div>
           </div>
         </div>
@@ -171,11 +171,11 @@ export default function CasesPage() {
             <ShieldAlert className="w-5 h-5 text-rose-500" />
           </div>
           <div>
-            <div className="text-2xl sm:text-3xl font-black font-mono text-rose-500">
+            <div className="text-2xl sm:text-3xl font-black mono text-rose-500">
               {criticalHighCount}
             </div>
-            <div className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider font-semibold">
-              High / Critical Threats
+            <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-semibold">
+              Critical / High Risk
             </div>
           </div>
         </div>
@@ -185,11 +185,11 @@ export default function CasesPage() {
             <CheckCircle2 className="w-5 h-5 text-emerald-500" />
           </div>
           <div>
-            <div className="text-2xl sm:text-3xl font-black font-mono text-emerald-500">
+            <div className="text-2xl sm:text-3xl font-black mono text-emerald-500">
               {cleanCount}
             </div>
-            <div className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider font-semibold">
-              Passed / Low Risk
+            <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-semibold">
+              Clean / Low Risk
             </div>
           </div>
         </div>
@@ -199,11 +199,11 @@ export default function CasesPage() {
             <Activity className="w-5 h-5 text-amber-500" />
           </div>
           <div>
-            <div className="text-2xl sm:text-3xl font-black font-mono text-[var(--text-primary)]">
+            <div className="text-2xl sm:text-3xl font-black mono text-[var(--text-primary)]">
               {avgScore}<span className="text-xs text-[var(--text-muted)] font-normal">/100</span>
             </div>
-            <div className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider font-semibold">
-              Mean Risk Index
+            <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-semibold">
+              Average Risk Score
             </div>
           </div>
         </div>
@@ -217,7 +217,7 @@ export default function CasesPage() {
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search by Case ID (CASE-...), Subject, Sender, or Filename..."
+            placeholder="Search by Case ID, Subject, Sender, or Filename..."
             className="cyber-input pl-10 pr-4"
           />
         </div>
@@ -230,7 +230,7 @@ export default function CasesPage() {
                 key={tier}
                 onClick={() => setFilterTier(tier)}
                 aria-selected={active}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-cyan)] ${
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-cyan)] cursor-pointer ${
                   active
                     ? 'bg-[var(--surface-base)] text-[var(--primary-cyan)] border border-[var(--border-cyan)] shadow-sm'
                     : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
@@ -247,17 +247,17 @@ export default function CasesPage() {
       {filtered.length === 0 ? (
         <div className="glass-card p-12 text-center">
           <FileSearch className="w-12 h-12 mx-auto text-[var(--text-muted)] mb-3 opacity-50" />
-          <p className="text-sm font-mono font-bold text-[var(--text-primary)] mb-1">
-            {cases.length === 0 ? 'No cases found in vault.' : 'No cases match current filter criteria.'}
+          <p className="text-sm font-bold text-[var(--text-primary)] mb-1">
+            {cases.length === 0 ? 'No cases analyzed yet.' : 'No cases match current filter criteria.'}
           </p>
-          <p className="text-xs font-mono text-[var(--text-muted)] mb-4">
-            Upload an EML email file to initiate automated forensic analysis.
+          <p className="text-xs text-[var(--text-secondary)] mb-4">
+            Upload an .eml email file to initiate automated analysis.
           </p>
           <Link
             href="/analyze"
-            className="btn-cyber-primary inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-mono font-bold shadow-md"
+            className="btn-cyber-primary inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold shadow-md"
           >
-            Ingest New EML
+            Analyze Email
           </Link>
         </div>
       ) : (
@@ -291,7 +291,7 @@ export default function CasesPage() {
                     {item.subject || 'No Subject Specified'}
                   </h3>
 
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-mono text-[var(--text-secondary)]">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[var(--text-secondary)]">
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3 text-[var(--text-muted)]" />
                       {item.timestamp ? new Date(item.timestamp).toLocaleString() : 'N/A'}
@@ -307,10 +307,10 @@ export default function CasesPage() {
 
                 <div className="flex items-center gap-3 shrink-0 self-start md:self-center">
                   <div className="text-right">
-                    <span className="text-xl font-mono font-black block" style={{ color: tier.color }}>
+                    <span className="text-xl mono font-black block" style={{ color: tier.color }}>
                       {item.risk_score}
                     </span>
-                    <span className="text-[9px] font-mono text-[var(--text-muted)] uppercase font-bold">SCORE</span>
+                    <span className="text-[9px] text-[var(--text-muted)] uppercase font-bold">SCORE</span>
                   </div>
 
                   <span
@@ -327,9 +327,9 @@ export default function CasesPage() {
 
                   <Link
                     href={`/report/${encodeURIComponent(item.case_id)}`}
-                    className="flex items-center gap-1 px-3.5 py-2 rounded-xl text-xs font-mono font-bold text-[var(--primary-cyan)] bg-[var(--primary-cyan)]/10 hover:bg-[var(--primary-cyan)]/20 active:scale-[0.98] border border-[var(--border-cyan)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-cyan)] transition-all shadow-sm"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[var(--text-primary)] bg-[var(--surface-container-high)] hover:border-[var(--primary-cyan)] border border-[var(--border-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-cyan)] transition-all shadow-sm cursor-pointer"
                   >
-                    <span>Inspect</span>
+                    <span>View Report</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>

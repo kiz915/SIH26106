@@ -118,15 +118,15 @@ export default function ReportPage() {
       <div className="flex items-center justify-center min-h-[60vh] px-4">
         <div className="glass-card p-8 max-w-md text-center">
           <ShieldAlert className="w-12 h-12 mx-auto mb-3 text-rose-500" />
-          <h2 className="text-lg font-bold text-[var(--text-primary)] font-mono mb-2">Case Dossier Not Found</h2>
-          <p className="text-xs text-[var(--text-secondary)] font-mono mb-6">
-            Case identifier <code className="text-[var(--primary-cyan)] font-bold">{params?.caseId}</code> was not located in active database records or browser storage.
+          <h2 className="text-lg font-bold text-[var(--text-primary)] mb-2">Case Not Found</h2>
+          <p className="text-xs text-[var(--text-secondary)] mb-6">
+            Case identifier <code className="mono text-[var(--primary-cyan)] font-bold">{params?.caseId}</code> was not located in active database records.
           </p>
           <Link
             href="/analyze"
-            className="btn-cyber-primary inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-mono font-bold shadow-md"
+            className="btn-cyber-primary inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold shadow-md"
           >
-            Ingest Email File
+            Analyze Email
           </Link>
         </div>
       </div>
@@ -136,9 +136,9 @@ export default function ReportPage() {
   if (loading || !data) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center space-y-3 font-mono">
+        <div className="text-center space-y-3">
           <div className="w-10 h-10 border-2 border-[var(--primary-cyan)] border-t-transparent rounded-full animate-spin mx-auto shadow-[0_0_15px_var(--primary-cyan-glow)]" />
-          <p className="text-sm text-[var(--primary-cyan)] font-bold">Deconstructing Forensic Case Evidence...</p>
+          <p className="text-sm text-[var(--primary-cyan)] font-medium">Loading case report...</p>
         </div>
       </div>
     );
@@ -155,19 +155,19 @@ export default function ReportPage() {
         <div>
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-1.5 text-xs font-mono text-[var(--text-muted)] hover:text-[var(--primary-cyan)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-cyan)] rounded px-1 -ml-1 transition-colors mb-2 no-print cursor-pointer"
+            className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--primary-cyan)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-cyan)] rounded px-1 -ml-1 transition-colors mb-2 no-print cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" /> Back to Cases
           </button>
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-[var(--text-primary)]">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text-primary)] mono">
               {data.case_id}
             </h1>
-            <span className="badge text-[10px] bg-[var(--primary-cyan)]/10 text-[var(--primary-cyan)] border border-[var(--border-cyan)]">
-              AUDITED FORENSIC DOSSIER
+            <span className="badge text-[10px] bg-[var(--primary-cyan)]/10 text-[var(--primary-cyan)] border border-[var(--border-cyan)] font-bold">
+              ANALYSIS REPORT
             </span>
           </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-xs font-mono text-[var(--text-secondary)]">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-xs text-[var(--text-secondary)]">
             <span className="flex items-center gap-1">
               <Clock className="w-3.5 h-3.5 text-[var(--text-muted)]" />
               {data.metadata?.analysis_timestamp ? new Date(data.metadata.analysis_timestamp).toLocaleString() : 'N/A'}
@@ -177,9 +177,9 @@ export default function ReportPage() {
               {data.metadata?.file_name || 'email.eml'}
             </span>
             {data.metadata?.execution_time_ms && (
-              <span className="text-[var(--primary-cyan)] font-bold flex items-center gap-1">
+              <span className="text-[var(--primary-cyan)] font-semibold flex items-center gap-1">
                 <Zap className="w-3.5 h-3.5 text-[var(--primary-cyan)]" />
-                <span>{data.metadata.execution_time_ms}ms execution</span>
+                <span className="mono">{data.metadata.execution_time_ms}ms execution</span>
               </span>
             )}
           </div>
@@ -190,22 +190,22 @@ export default function ReportPage() {
           {data.relay_path?.length > 0 && (
             <Link
               href={`/map/${encodeURIComponent(data.case_id)}`}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-mono font-bold text-[var(--primary-cyan)] bg-[var(--primary-cyan)]/10 hover:bg-[var(--primary-cyan)]/20 active:scale-[0.98] border border-[var(--border-cyan)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-cyan)] transition-all shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[var(--primary-cyan)] bg-[var(--primary-cyan)]/10 hover:bg-[var(--primary-cyan)]/20 active:scale-[0.98] border border-[var(--border-cyan)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-cyan)] transition-all shadow-sm"
             >
               <MapPin className="w-4 h-4 text-[var(--primary-cyan)]" />
-              <span>Geo-Relay Map</span>
+              <span>Delivery Route Map</span>
             </Link>
           )}
           <Link
             href={`/blockchain?caseId=${encodeURIComponent(data.case_id)}&hash=${encodeURIComponent(evidence?.sha256 || '')}`}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-mono font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 active:scale-[0.98] border border-amber-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 transition-all shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 active:scale-[0.98] border border-amber-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 transition-all shadow-sm"
           >
             <Blocks className="w-4 h-4 text-amber-500" />
-            <span>Blockchain Seal</span>
+            <span>Ledger Record</span>
           </Link>
           <button
             onClick={handleExportJSON}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-mono font-bold text-[var(--text-primary)] bg-[var(--surface-container-low)] hover:bg-[var(--surface-container)] active:scale-[0.98] border border-[var(--border-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-cyan)] transition-all shadow-sm cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[var(--text-primary)] bg-[var(--surface-container-low)] hover:bg-[var(--surface-container)] active:scale-[0.98] border border-[var(--border-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-cyan)] transition-all shadow-sm cursor-pointer"
             title="Download Forensic JSON"
           >
             <Download className="w-4 h-4 text-[var(--text-muted)]" />
@@ -213,11 +213,11 @@ export default function ReportPage() {
           </button>
           <button
             onClick={handlePrint}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-mono font-bold text-[var(--text-primary)] bg-[var(--surface-container-low)] hover:bg-[var(--surface-container)] active:scale-[0.98] border border-[var(--border-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-cyan)] transition-all shadow-sm cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[var(--text-primary)] bg-[var(--surface-container-low)] hover:bg-[var(--surface-container)] active:scale-[0.98] border border-[var(--border-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-cyan)] transition-all shadow-sm cursor-pointer"
             title="Print or Save as PDF"
           >
             <Printer className="w-4 h-4 text-[var(--text-muted)]" />
-            <span>Print Dossier</span>
+            <span>Print Report</span>
           </button>
         </div>
       </motion.div>

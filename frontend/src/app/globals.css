@@ -47,7 +47,37 @@
   --terminal-border: rgba(0, 229, 255, 0.25);
 
   --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
-  --font-mono: var(--font-mono), 'JetBrains Mono', 'Roboto Mono', monospace;
+  --font-mono: var(--font-jetbrains-mono), 'JetBrains Mono', 'Roboto Mono', monospace;
+}
+
+/* =========================================================
+   Typography: sans-serif for UI, monospace only for data values
+   ========================================================= */
+
+/* UI text (labels, descriptions, headings, body) is sans-serif by default */
+h1, h2, h3, h4, h5, h6,
+p, span, label, th, td, button, li {
+  font-family: var(--font-sans);
+}
+
+/* Only code/data values use monospace via the .mono utility */
+.mono {
+  font-family: var(--font-mono);
+}
+
+code, kbd, samp, pre {
+  font-family: var(--font-mono);
+}
+
+/* Clean sans-serif heading hierarchy */
+h1 { font-size: 1.875rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; }
+h2 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; line-height: 1.3; }
+h3 { font-size: 1.05rem; font-weight: 600; line-height: 1.35; }
+h4 { font-size: 0.925rem; font-weight: 600; line-height: 1.4; }
+
+/* Utility that strips mono from components that incorrectly default to it */
+.ui-text {
+  font-family: var(--font-sans) !important;
 }
 
 /* Light Mode: Clinical Precision (Forensic Laboratory White) */
@@ -125,24 +155,24 @@ body {
   background: var(--primary-cyan);
 }
 
-/* Glassmorphic Cyber Card & Panels (Stitch Specification) */
+/* Glassmorphic Card & Panels */
 .glass-card, .glass-panel {
   background: var(--glass-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-subtle);
   border-radius: 0.75rem;
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
 }
 
 html.light .glass-card, html.light .glass-panel {
-  box-shadow: 0 4px 15px -2px rgba(11, 28, 48, 0.05);
+  box-shadow: 0 1px 3px rgba(11, 28, 48, 0.06);
 }
 
 .glass-card:hover, .glass-panel:hover {
-  border-color: var(--border-cyan);
+  border-color: var(--border-subtle);
 }
 
 /* Terminal Card */
@@ -217,7 +247,7 @@ html.light .zebra-row:nth-child(even) {
 
 /* Dropzone styling */
 .dropzone {
-  border: 2px dashed var(--border-cyan);
+  border: 2px dashed var(--border-subtle);
   border-radius: 1rem;
   background: var(--surface-container-lowest);
   backdrop-filter: blur(12px);
@@ -230,7 +260,6 @@ html.light .zebra-row:nth-child(even) {
   border-color: var(--primary-cyan);
   border-style: solid;
   background: var(--surface-container-low);
-  box-shadow: 0 0 35px var(--primary-cyan-glow);
 }
 
 /* Gradient Text Utilities */
@@ -259,7 +288,6 @@ html.light .gradient-text-cyan {
   font-weight: 600;
   letter-spacing: 0.025em;
   white-space: nowrap;
-  font-family: var(--font-mono);
 }
 
 /* Button glow and state utilities according to Design System 8-States Specification */
@@ -268,31 +296,24 @@ html.light .gradient-text-cyan {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background: linear-gradient(135deg, #006875 0%, #0284c7 100%);
-  color: #ffffff;
+  background: var(--primary-cyan);
+  color: #05070b;
   font-weight: 700;
-  font-family: var(--font-mono);
-  box-shadow: 0 4px 18px rgba(2, 132, 199, 0.35);
-  border: 1px solid rgba(0, 229, 255, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  border: 1px solid transparent;
   transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   user-select: none;
 }
 
-html.dark .btn-cyber-primary {
-  background: linear-gradient(135deg, #00e5ff 0%, #0099cc 100%);
-  color: #05070b;
-  box-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
-}
-
 .btn-cyber-primary:hover {
-  filter: brightness(1.1);
-  box-shadow: 0 6px 25px rgba(0, 229, 255, 0.5);
+  filter: brightness(1.08);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 .btn-cyber-primary:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px var(--surface-floor), 0 0 0 5px var(--primary-cyan);
+  box-shadow: 0 0 0 2px var(--surface-floor), 0 0 0 4px var(--primary-cyan);
 }
 
 .btn-cyber-primary:active {
@@ -316,7 +337,6 @@ html.dark .btn-cyber-primary {
   background: var(--surface-container-low);
   color: var(--text-primary);
   font-weight: 600;
-  font-family: var(--font-mono);
   border: 1px solid var(--border-subtle);
   transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
@@ -325,13 +345,13 @@ html.dark .btn-cyber-primary {
 
 .btn-cyber-secondary:hover {
   background: var(--surface-container);
-  border-color: var(--border-cyan);
+  border-color: var(--border-subtle);
   color: var(--text-primary);
 }
 
 .btn-cyber-secondary:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px var(--surface-floor), 0 0 0 5px var(--primary-cyan);
+  box-shadow: 0 0 0 2px var(--surface-floor), 0 0 0 4px var(--primary-cyan);
 }
 
 .btn-cyber-secondary:active {
@@ -353,7 +373,6 @@ html.dark .btn-cyber-primary {
   background: rgba(255, 51, 75, 0.1);
   color: #ff334b;
   font-weight: 600;
-  font-family: var(--font-mono);
   border: 1px solid rgba(255, 51, 75, 0.3);
   transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
@@ -364,12 +383,11 @@ html.dark .btn-cyber-primary {
   background: rgba(255, 51, 75, 0.2);
   border-color: rgba(255, 51, 75, 0.6);
   color: #ff4d63;
-  box-shadow: 0 0 15px rgba(255, 51, 75, 0.3);
 }
 
 .btn-cyber-destructive:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px var(--surface-floor), 0 0 0 5px #ff334b;
+  box-shadow: 0 0 0 2px var(--surface-floor), 0 0 0 4px #ff334b;
 }
 
 .btn-cyber-destructive:active {
@@ -388,7 +406,6 @@ html.dark .btn-cyber-primary {
   background: var(--surface-container-low);
   border: 1px solid var(--border-subtle);
   color: var(--text-primary);
-  font-family: var(--font-mono);
   font-size: 0.75rem;
   padding: 0.625rem 0.875rem;
   border-radius: 0.75rem;
@@ -397,17 +414,17 @@ html.dark .btn-cyber-primary {
 }
 
 .cyber-input:hover {
-  border-color: rgba(0, 229, 255, 0.35);
+  border-color: var(--border-subtle);
 }
 
 .cyber-input:focus {
   border-color: var(--primary-cyan);
-  box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.15);
+  box-shadow: 0 0 0 3px var(--primary-cyan-glow);
 }
 
 .cyber-input.input-error {
   border-color: var(--accent-red);
-  box-shadow: 0 0 0 3px rgba(255, 51, 75, 0.15);
+  box-shadow: 0 0 0 3px var(--accent-red-glow);
 }
 
 /* Leaflet dark & light map overrides */

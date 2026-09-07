@@ -13,12 +13,12 @@ export default function RelayTimeline({ relayPath = [], caseId }) {
       <div className="glass-card p-5">
         <div className="flex items-center gap-2 mb-3">
           <Route className="w-5 h-5 text-[var(--primary-cyan)]" />
-          <h3 className="text-sm font-bold font-mono text-[var(--text-primary)]">
-            Received-Header Relay Path
+          <h3 className="text-sm font-bold text-[var(--text-primary)]">
+            Relay Transit Path
           </h3>
         </div>
-        <p className="text-center py-6 text-xs text-[var(--text-muted)] font-mono">
-          No Received headers available for relay path deconstruction.
+        <p className="text-center py-6 text-xs text-[var(--text-muted)]">
+          No intermediate transit hops found in Received headers.
         </p>
       </div>
     );
@@ -30,14 +30,14 @@ export default function RelayTimeline({ relayPath = [], caseId }) {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Route className="w-5 h-5 text-[var(--primary-cyan)]" />
-            <h3 className="text-sm font-bold font-mono text-[var(--text-primary)]">
-              Relay Path Flight Trajectory ({relayPath.length} Hops)
+            <h3 className="text-sm font-bold text-[var(--text-primary)]">
+              Relay Transit Path ({relayPath.length} Hops)
             </h3>
           </div>
           {caseId && (
             <Link
               href={`/map/${encodeURIComponent(caseId)}`}
-              className="inline-flex items-center gap-1 text-xs font-mono font-bold text-[var(--primary-cyan)] hover:underline transition-colors"
+              className="inline-flex items-center gap-1 text-xs font-bold text-[var(--primary-cyan)] hover:underline transition-colors"
             >
               <MapPin className="w-3.5 h-3.5" />
               <span>Full Map</span>
@@ -45,7 +45,7 @@ export default function RelayTimeline({ relayPath = [], caseId }) {
           )}
         </div>
 
-        <p className="text-xs text-[var(--text-secondary)] font-mono mb-4">
+        <p className="text-xs text-[var(--text-secondary)] mb-4">
           Hop 1 is closest to origin sender; last hop delivered into destination mailbox.
         </p>
 

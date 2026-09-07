@@ -3,12 +3,12 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 
 const ThemeContext = createContext({
-  theme: 'dark',
+  theme: 'light',
   toggleTheme: () => {},
 });
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState('light');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -19,8 +19,7 @@ export function ThemeProvider({ children }) {
       document.documentElement.classList.remove('light', 'dark');
       document.documentElement.classList.add(saved);
     } else {
-      // Default to dark or system
-      document.documentElement.classList.add('dark');
+      document.documentElement.classList.add('light');
     }
   }, []);
 

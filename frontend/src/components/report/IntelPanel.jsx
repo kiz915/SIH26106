@@ -11,14 +11,14 @@ export default function IntelPanel({ ipIntelligence = [], domainIntelligence = [
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Globe className="w-5 h-5 text-[var(--primary-cyan)]" />
-          <h3 className="text-sm font-bold font-mono text-[var(--text-primary)]">
-            Infrastructure & Threat Intelligence
+          <h3 className="text-sm font-bold text-[var(--text-primary)]">
+            Threat Intelligence
           </h3>
         </div>
         <div className="flex gap-1 p-1 rounded-lg bg-[var(--surface-container-low)] border border-[var(--border-subtle)]">
           <button
             onClick={() => setActiveTab('ip')}
-            className={`px-3 py-1 rounded-md text-xs font-mono transition-all ${
+            className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
               activeTab === 'ip'
                 ? 'bg-[var(--surface-base)] text-[var(--primary-cyan)] font-bold border border-[var(--border-cyan)] shadow-sm'
                 : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
@@ -28,7 +28,7 @@ export default function IntelPanel({ ipIntelligence = [], domainIntelligence = [
           </button>
           <button
             onClick={() => setActiveTab('domain')}
-            className={`px-3 py-1 rounded-md text-xs font-mono transition-all ${
+            className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
               activeTab === 'domain'
                 ? 'bg-[var(--surface-base)] text-[var(--primary-cyan)] font-bold border border-[var(--border-cyan)] shadow-sm'
                 : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
@@ -42,7 +42,7 @@ export default function IntelPanel({ ipIntelligence = [], domainIntelligence = [
       {activeTab === 'ip' ? (
         <div className="space-y-3">
           {ipIntelligence.length === 0 ? (
-            <p className="text-center py-6 text-xs text-[var(--text-muted)] font-mono">
+            <p className="text-center py-6 text-xs text-[var(--text-muted)]">
               No public IP intelligence records returned for this case.
             </p>
           ) : (

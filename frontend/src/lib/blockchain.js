@@ -30,7 +30,7 @@ export function deriveBlockchainRecord(caseId, sha256Digest, timestamp) {
     network: BLOCKCHAIN_NETWORK.name,
     chainId: BLOCKCHAIN_NETWORK.chainId,
     contractAddress: BLOCKCHAIN_NETWORK.contractAddress,
-    caseId: caseId || 'CASE-20260906-PROT',
+    caseId: caseId || 'CASE-PENDING',
     payloadSha256: sha256Digest,
     blockHeight,
     transactionHash: txHash,

@@ -51,12 +51,12 @@ export default function IOCPanel({ iocs }) {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Globe className="w-5 h-5 text-[var(--primary-cyan)]" />
-            <h3 className="text-sm font-bold font-mono text-[var(--text-primary)]">
-              Indicators of Compromise (IOCs)
+            <h3 className="text-sm font-bold text-[var(--text-primary)]">
+              Indicators & Artifacts
             </h3>
           </div>
-          <span className="text-[11px] font-mono text-[var(--text-muted)]">
-            Total: {Object.values(iocs).flat().length} IOCs
+          <span className="text-[11px] text-[var(--text-muted)]">
+            Total: {Object.values(iocs).flat().length} items
           </span>
         </div>
 
@@ -72,7 +72,7 @@ export default function IOCPanel({ iocs }) {
                   setActiveTab(key);
                   setFilterText('');
                 }}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-mono transition-all ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs transition-all cursor-pointer ${
                   active
                     ? 'bg-[var(--surface-base)] text-[var(--primary-cyan)] font-bold border border-[var(--border-cyan)] shadow-sm'
                     : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'

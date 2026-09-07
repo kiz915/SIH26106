@@ -62,15 +62,15 @@ export default function CaseMapPage() {
       <div className="flex items-center justify-center min-h-[60vh] px-4">
         <div className="glass-card p-8 max-w-md text-center space-y-4">
           <ShieldAlert className="w-12 h-12 mx-auto text-rose-500" />
-          <h2 className="text-lg font-bold text-[var(--text-primary)] font-mono">Relay Map Unavailable</h2>
-          <p className="text-xs text-[var(--text-secondary)] font-mono">
-            Case <code className="text-[var(--primary-cyan)] font-bold">{params?.caseId}</code> was not found in active database.
+          <h2 className="text-lg font-bold text-[var(--text-primary)]">Relay Map Unavailable</h2>
+          <p className="text-xs text-[var(--text-secondary)]">
+            Case <code className="mono text-[var(--primary-cyan)] font-bold">{params?.caseId}</code> was not found in active database records.
           </p>
           <Link
             href="/cases"
-            className="btn-cyber-primary inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-mono font-bold"
+            className="btn-cyber-primary inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold"
           >
-            Go to Case Vault
+            Go to Cases
           </Link>
         </div>
       </div>
@@ -79,9 +79,9 @@ export default function CaseMapPage() {
 
   if (loading || !data) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh] text-[var(--primary-cyan)] font-mono text-sm">
+      <div className="flex items-center justify-center min-h-[60vh] text-[var(--primary-cyan)] text-sm">
         <div className="w-6 h-6 border-2 border-[var(--primary-cyan)] border-t-transparent rounded-full animate-spin mr-3" />
-        <span>Initializing Flight Path Matrix...</span>
+        <span>Loading delivery route...</span>
       </div>
     );
   }
@@ -95,26 +95,26 @@ export default function CaseMapPage() {
         <div>
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-1.5 text-xs font-mono text-[var(--text-muted)] hover:text-[var(--primary-cyan)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-cyan)] rounded px-1 -ml-1 transition-colors mb-2 cursor-pointer"
+            className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--primary-cyan)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-cyan)] rounded px-1 -ml-1 transition-colors mb-2 cursor-pointer"
           >
-            <ArrowLeft className="w-3.5 h-3.5" /> Back to Dossier
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Report
           </button>
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-[var(--text-primary)]">
-              Geo-Relay Flight Path: {data.case_id}
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text-primary)]">
+              Delivery Route: <span className="mono">{data.case_id}</span>
             </h1>
-            <span className="badge text-[10px] bg-[var(--primary-cyan)]/10 text-[var(--primary-cyan)] border border-[var(--border-cyan)] font-bold">
-              {hops.length} HOPS PLOTTED
+            <span className="badge text-[10px] bg-[var(--primary-cyan)]/10 text-[var(--primary-cyan)] border border-[var(--border-cyan)] font-semibold">
+              {hops.length} Hops
             </span>
           </div>
         </div>
 
         <Link
           href={`/report/${encodeURIComponent(data.case_id)}`}
-          className="btn-cyber-primary flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-mono font-bold shadow-md self-start sm:self-auto"
+          className="btn-cyber-primary flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold shadow-md self-start sm:self-auto"
         >
           <FileText className="w-3.5 h-3.5" />
-          <span>View Full Report</span>
+          <span>View Report</span>
         </Link>
       </div>
 
@@ -125,14 +125,14 @@ export default function CaseMapPage() {
           <RelayMapInner relayPath={hops} />
         </div>
 
-        {/* Sidebar Flight Hop Breakdown */}
-        <div className="glass-card p-5 overflow-y-auto space-y-3 font-mono text-xs">
+        {/* Sidebar Hop Breakdown */}
+        <div className="glass-card p-5 overflow-y-auto space-y-3 text-xs">
           <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-2">
-            <span className="font-bold text-[var(--text-primary)] flex items-center gap-1.5">
+            <span className="font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
               <Route className="w-4 h-4 text-[var(--primary-cyan)]" />
-              <span>Hop-by-Hop Breakdown</span>
+              <span>Hop Sequence</span>
             </span>
-            <span className="text-[11px] text-[var(--text-muted)]">{hops.length} Total</span>
+            <span className="text-[11px] mono text-[var(--text-muted)]">{hops.length} Total</span>
           </div>
 
           {hops.map((hop, idx) => (
@@ -141,10 +141,10 @@ export default function CaseMapPage() {
               className="p-3 rounded-xl bg-[var(--surface-container-low)] border border-[var(--border-subtle)] hover:border-[var(--border-cyan)] transition-all space-y-1"
             >
               <div className="flex items-center justify-between">
-                <span className="font-bold text-[var(--primary-cyan)]">
+                <span className="font-semibold text-[var(--primary-cyan)]">
                   Hop #{hop.hop_number || idx + 1}
                 </span>
-                <span className="text-[10px] text-[var(--text-muted)]">
+                <span className="text-[10px] mono text-[var(--text-muted)]">
                   {hop.ip_type || (hop.is_private_ip ? 'RFC1918' : 'Public')}
                 </span>
               </div>
@@ -152,25 +152,25 @@ export default function CaseMapPage() {
               {hop.ip && (
                 <div className="text-[11px]">
                   <span className="text-[var(--text-muted)]">IP:</span>{' '}
-                  <span className="text-[var(--text-primary)] font-semibold">{hop.ip}</span>
+                  <span className="mono text-[var(--text-primary)] font-medium">{hop.ip}</span>
                 </div>
               )}
 
               {hop.from_host && (
-                <div className="text-[10px] text-[var(--text-secondary)] truncate">
+                <div className="text-[10px] mono text-[var(--text-secondary)] truncate">
                   From: {hop.from_host}
                 </div>
               )}
 
               {hop.by_host && (
-                <div className="text-[10px] text-[var(--text-secondary)] truncate">
+                <div className="text-[10px] mono text-[var(--text-secondary)] truncate">
                   By: {hop.by_host}
                 </div>
               )}
 
               {hop.delay_seconds !== null && hop.delay_seconds !== undefined && (
-                <div className="text-[10px] text-amber-500 font-semibold pt-0.5">
-                  Δ {hop.delay_seconds}s transit latency
+                <div className="text-[10px] text-amber-500 font-medium pt-0.5 mono">
+                  +{hop.delay_seconds}s latency
                 </div>
               )}
             </div>

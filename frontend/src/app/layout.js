@@ -13,19 +13,19 @@ const inter = Inter({
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
-  variable: '--font-mono',
+  variable: '--font-jetbrains-mono',
   display: 'swap',
 });
 
 export const metadata = {
-  title: 'ThreatLens — AI & Blockchain Forensic Intelligence',
-  description: 'Military-grade email threat detection, GeoLocation relay mapping, transformer AI/ML phishing analysis, and cryptographic blockchain chain-of-custody verification.',
-  keywords: ['email forensics', 'threat intelligence', 'phishing detection', 'blockchain custody', 'cybersecurity', 'SIH2026'],
+  title: 'ThreatLens — Email Forensics & Phishing Analysis',
+  description: 'Upload an .eml file to analyze headers, authentication, and risk signals for phishing and business email compromise.',
+  keywords: ['email forensics', 'threat intelligence', 'phishing detection', 'cybersecurity', 'SIH2026'],
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`dark ${inter.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`light ${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="antialiased min-h-screen selection:bg-cyan-500/30 selection:text-cyan-200 transition-colors duration-300">
         <ThemeProvider>
           {/* Interactive Dynamic Background with Animated Constellation Canvas */}

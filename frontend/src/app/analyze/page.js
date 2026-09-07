@@ -44,12 +44,12 @@ import { saveAnalysis } from '@/lib/storage';
 import { MAX_FILE_SIZE_MB, MAX_FILE_SIZE_BYTES } from '@/lib/constants';
 
 const STAGES = [
-  { id: 1, name: 'RFC Deconstruction', subtitle: 'MIME & Envelope Headers', icon: FileUp, tag: 'RFC-5322' },
-  { id: 2, name: 'Cryptographic Auth', subtitle: 'SPF / DKIM / DMARC Matrix', icon: Shield, tag: 'RFC-7208' },
-  { id: 3, name: 'Relay Trajectory', subtitle: 'Received-Header Transit Path', icon: Route, tag: 'SMTP-HOPS' },
-  { id: 4, name: 'IOC & Domain Intel', subtitle: 'Extracted URLs, Domains & IPs', icon: Globe, tag: 'THREAT-IOC' },
-  { id: 5, name: 'Threat & Risk Engine', subtitle: 'Heuristics & Explainability', icon: BrainCircuit, tag: 'NLP-RULES' },
-  { id: 6, name: 'Custody & Ledger', subtitle: 'SHA-256 & Chain-of-Custody', icon: Blocks, tag: 'NIST-800-86' },
+  { id: 1, name: 'Email Headers', subtitle: 'MIME & Envelope Structure', icon: FileUp, tag: 'HEADERS' },
+  { id: 2, name: 'Authentication', subtitle: 'SPF, DKIM & DMARC Validation', icon: Shield, tag: 'AUTH' },
+  { id: 3, name: 'Delivery Route', subtitle: 'SMTP Hop Chronology & Delays', icon: Route, tag: 'HOPS' },
+  { id: 4, name: 'Links & Domains', subtitle: 'Extracted URLs, Domains & IPs', icon: Globe, tag: 'INDICATORS' },
+  { id: 5, name: 'Risk Assessment', subtitle: 'Threat Signals & Explainability', icon: BrainCircuit, tag: 'ASSESSMENT' },
+  { id: 6, name: 'Evidence Record', subtitle: 'Cryptographic Hash & Custody', icon: Blocks, tag: 'CUSTODY' },
 ];
 
 const PRESET_SAMPLES = [
@@ -300,36 +300,29 @@ export default function AnalyzePage() {
   };
 
   // Helper extraction
-  const headers = analysisResult?.headers || {};
+  const headers = analysisResult?.headers || analysisResult?.email_metadata || {};
   const auth = analysisResult?.authentication || {};
   const relay = analysisResult?.relay_path || [];
   const iocs = analysisResult?.iocs || {};
   const risk = analysisResult?.risk || {};
   const metadata = analysisResult?.metadata || {};
+  const signals = risk.signals || analysisResult?.signals || [];
 
-  const fromVal = headers.from || 'Unknown';
+  const fromVal = headers.from || headers.from_address || 'Unknown';
   const returnPathVal = headers.return_path || '';
   const replyToVal = headers.reply_to || '';
   const isSpoofed = returnPathVal && fromVal && !fromVal.toLowerCase().includes(returnPathVal.split('@')[1]?.toLowerCase() || '_____');
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
-      {/* Page Title / Forensic Studio Header */}
+      {/* Page Title / Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between pb-6 mb-8 border-b border-[var(--border-subtle)] gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="font-mono text-xs font-bold text-[var(--primary-cyan)] uppercase tracking-wider">
-              Forensic Investigation Lab
-            </span>
-            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[var(--surface-container-high)] text-[var(--text-muted)] border border-[var(--border-subtle)]">
-              NIST SP 800-86
-            </span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text-primary)] font-mono">
-            RFC Deconstruction & Forensic Studio
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text-primary)]">
+            Email Analysis
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
-            Step-by-step envelope parsing, cryptographic authentication validation, relay trajectory, and SHA-256 custody sealing.
+            Step-by-step header inspection, authentication validation, relay path tracing, and risk assessment.
           </p>
         </div>
 
@@ -340,14 +333,14 @@ export default function AnalyzePage() {
               className="btn-cyber-secondary px-3.5 py-1.5 rounded-xl text-xs"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              <span>New Ingest</span>
+              <span>New Analysis</span>
             </button>
             <Link
-              href={`/report/${metadata.case_id || 'latest'}`}
+              href={`/report/${metadata.case_id || analysisResult.case_id || 'latest'}`}
               className="btn-cyber-primary px-3.5 py-1.5 rounded-xl text-xs shadow-sm"
             >
               <FileText className="w-3.5 h-3.5" />
-              <span>Full Docket</span>
+              <span>View Report</span>
             </Link>
           </div>
         )}
@@ -545,9 +538,9 @@ Subject: ..."
 
             {/* Primary Analysis Trigger Button */}
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[var(--border-subtle)]">
-              <div className="flex items-center gap-2 text-xs font-mono text-[var(--text-muted)]">
+              <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
                 <Shield className="w-4 h-4 text-[var(--primary-cyan)] shrink-0" />
-                <span>Payload processed locally on-premise; SHA-256 evidence logged into SQLite.</span>
+                <span>Processed locally; evidence recorded to database.</span>
               </div>
 
               <button
@@ -558,12 +551,12 @@ Subject: ..."
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Deconstructing RFC Pipeline...</span>
+                    <span>Analyzing Email...</span>
                   </>
                 ) : (
                   <>
                     <Zap className="w-4 h-4" />
-                    <span>Run Step-by-Step Deconstruction</span>
+                    <span>Analyze Email</span>
                   </>
                 )}
               </button>
@@ -827,11 +820,11 @@ Subject: ..."
                 <div className="glass-panel p-6 rounded-lg border border-[var(--border-subtle)] flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <span className="font-mono text-xs font-bold text-[var(--text-secondary)] uppercase">
+                      <span className="text-xs font-bold text-[var(--text-secondary)] uppercase">
                         SPF (RFC 7208)
                       </span>
                       <span
-                        className={`font-mono text-xs font-bold px-2 py-0.5 rounded ${
+                        className={`mono text-xs font-bold px-2 py-0.5 rounded ${
                           auth.spf?.status?.toLowerCase() === 'pass'
                             ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
                             : auth.spf?.status?.toLowerCase() === 'fail'
@@ -843,26 +836,26 @@ Subject: ..."
                       </span>
                     </div>
 
-                    <div className="space-y-3 font-mono text-xs text-[var(--text-secondary)] mt-4">
+                    <div className="space-y-3 text-xs text-[var(--text-secondary)] mt-4">
                       <div>
                         <span className="text-[10px] text-[var(--text-muted)] block">Sending Client IP</span>
-                        <span className="text-[var(--text-primary)] font-bold">{auth.spf?.client_ip || '198.51.100.42'}</span>
+                        <span className="mono text-[var(--text-primary)] font-bold">{auth.spf?.client_ip || 'N/A'}</span>
                       </div>
                       <div>
                         <span className="text-[10px] text-[var(--text-muted)] block">MailFrom Domain</span>
-                        <span className="text-[var(--text-primary)]">{auth.spf?.domain || returnPathVal || 'N/A'}</span>
+                        <span className="mono text-[var(--text-primary)]">{auth.spf?.domain || returnPathVal || 'N/A'}</span>
                       </div>
                       <div>
                         <span className="text-[10px] text-[var(--text-muted)] block">Diagnostic Detail</span>
                         <span className="text-[11px] text-[var(--text-muted)] leading-tight block mt-0.5">
-                          {auth.spf?.reason || 'IP address is not in permitted SPF record ip4 range.'}
+                          {auth.spf?.reason || (auth.spf?.status?.toLowerCase() === 'pass' ? 'Sender IP permitted by SPF record.' : 'No diagnostic detail available.')}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-6 pt-3 border-t border-[var(--border-subtle)] text-[10px] font-mono text-[var(--text-muted)]">
-                    Status: {auth.spf?.status === 'pass' ? 'Authorized Relay' : 'Unauthorized Sender'}
+                  <div className="mt-6 pt-3 border-t border-[var(--border-subtle)] text-[10px] text-[var(--text-muted)]">
+                    Status: {auth.spf?.status?.toLowerCase() === 'pass' ? 'Authorized Relay' : auth.spf?.status ? 'Unauthorized Sender' : 'Not Evaluated'}
                   </div>
                 </div>
 
@@ -870,11 +863,11 @@ Subject: ..."
                 <div className="glass-panel p-6 rounded-lg border border-[var(--border-subtle)] flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <span className="font-mono text-xs font-bold text-[var(--text-secondary)] uppercase">
+                      <span className="text-xs font-bold text-[var(--text-secondary)] uppercase">
                         DKIM (RFC 6376)
                       </span>
                       <span
-                        className={`font-mono text-xs font-bold px-2 py-0.5 rounded ${
+                        className={`mono text-xs font-bold px-2 py-0.5 rounded ${
                           auth.dkim?.status?.toLowerCase() === 'pass'
                             ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
                             : auth.dkim?.status?.toLowerCase() === 'fail'
@@ -886,26 +879,26 @@ Subject: ..."
                       </span>
                     </div>
 
-                    <div className="space-y-3 font-mono text-xs text-[var(--text-secondary)] mt-4">
+                    <div className="space-y-3 text-xs text-[var(--text-secondary)] mt-4">
                       <div>
                         <span className="text-[10px] text-[var(--text-muted)] block">Signing Domain (d=)</span>
-                        <span className="text-[var(--text-primary)] font-bold">{auth.dkim?.domain || 'legit-corp.example'}</span>
+                        <span className="mono text-[var(--text-primary)] font-bold">{auth.dkim?.domain || 'N/A'}</span>
                       </div>
                       <div>
                         <span className="text-[10px] text-[var(--text-muted)] block">Key Selector (s=)</span>
-                        <span className="text-[var(--text-primary)]">{auth.dkim?.selector || 'default'}</span>
+                        <span className="mono text-[var(--text-primary)]">{auth.dkim?.selector || 'N/A'}</span>
                       </div>
                       <div>
                         <span className="text-[10px] text-[var(--text-muted)] block">Signature Status</span>
                         <span className="text-[11px] text-[var(--text-muted)] leading-tight block mt-0.5">
-                          {auth.dkim?.reason || 'Cryptographic RSA signature verification failed / absent.'}
+                          {auth.dkim?.reason || (auth.dkim?.status?.toLowerCase() === 'pass' ? 'Cryptographic signature verified.' : 'No DKIM signature found.')}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-6 pt-3 border-t border-[var(--border-subtle)] text-[10px] font-mono text-[var(--text-muted)]">
-                    Integrity: {auth.dkim?.status === 'pass' ? 'Tamper Proof' : 'Unsigned / Broken'}
+                  <div className="mt-6 pt-3 border-t border-[var(--border-subtle)] text-[10px] text-[var(--text-muted)]">
+                    Integrity: {auth.dkim?.status?.toLowerCase() === 'pass' ? 'Tamper Proof' : 'Unsigned / Broken'}
                   </div>
                 </div>
 
@@ -913,40 +906,42 @@ Subject: ..."
                 <div className="glass-panel p-6 rounded-lg border border-[var(--border-subtle)] flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <span className="font-mono text-xs font-bold text-[var(--text-secondary)] uppercase">
+                      <span className="text-xs font-bold text-[var(--text-secondary)] uppercase">
                         DMARC (RFC 7489)
                       </span>
                       <span
-                        className={`font-mono text-xs font-bold px-2 py-0.5 rounded ${
+                        className={`mono text-xs font-bold px-2 py-0.5 rounded ${
                           auth.dmarc?.status?.toLowerCase() === 'pass'
                             ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                            : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                            : auth.dmarc?.status?.toLowerCase() === 'fail'
+                            ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                            : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
                         }`}
                       >
-                        {auth.dmarc?.status?.toUpperCase() || 'FAIL'}
+                        {auth.dmarc?.status?.toUpperCase() || 'NONE'}
                       </span>
                     </div>
 
-                    <div className="space-y-3 font-mono text-xs text-[var(--text-secondary)] mt-4">
+                    <div className="space-y-3 text-xs text-[var(--text-secondary)] mt-4">
                       <div>
                         <span className="text-[10px] text-[var(--text-muted)] block">Published Policy</span>
-                        <span className="text-rose-400 font-bold">{auth.dmarc?.policy || 'p=reject'}</span>
+                        <span className="mono text-[var(--text-primary)] font-bold">{auth.dmarc?.policy || 'none'}</span>
                       </div>
                       <div>
                         <span className="text-[10px] text-[var(--text-muted)] block">Header From Alignment</span>
-                        <span className="text-[var(--text-primary)]">{auth.dmarc?.aligned ? 'Aligned' : 'Unaligned (Strict Fail)'}</span>
+                        <span className="text-[var(--text-primary)]">{auth.dmarc?.aligned ? 'Aligned' : 'Unaligned'}</span>
                       </div>
                       <div>
                         <span className="text-[10px] text-[var(--text-muted)] block">Enforcement Action</span>
                         <span className="text-[11px] text-[var(--text-muted)] leading-tight block mt-0.5">
-                          {auth.dmarc?.status === 'pass' ? 'Accept message' : 'Drop / Quarantine payload based on p=reject'}
+                          {auth.dmarc?.status === 'pass' ? 'Accept message' : auth.dmarc?.policy ? `Enforce ${auth.dmarc.policy} policy` : 'No policy enforcement action'}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-6 pt-3 border-t border-[var(--border-subtle)] text-[10px] font-mono text-[var(--text-muted)]">
-                    Policy: {auth.dmarc?.policy || 'p=reject'}
+                  <div className="mt-6 pt-3 border-t border-[var(--border-subtle)] text-[10px] text-[var(--text-muted)]">
+                    Policy: {auth.dmarc?.policy || 'none'}
                   </div>
                 </div>
               </div>
@@ -970,63 +965,67 @@ Subject: ..."
             <div className="space-y-6">
               <div className="glass-panel p-6 rounded-lg border border-[var(--border-subtle)]">
                 <div className="flex items-center justify-between mb-4 pb-2 border-b border-[var(--border-subtle)]">
-                  <h3 className="font-mono text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">
-                    Chronological SMTP Transit Path ({relay.length || 3} Hops Traced)
+                  <h3 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">
+                    SMTP Transit Path ({relay.length} Hops Traced)
                   </h3>
-                  <Link
-                    href={`/map/${metadata.case_id || 'latest'}`}
-                    className="flex items-center gap-1 text-xs font-mono text-[var(--primary-cyan)] hover:underline"
-                  >
-                    <MapPin className="w-3.5 h-3.5" />
-                    <span>Open Interactive World Map</span>
-                  </Link>
+                  {relay.length > 0 && (
+                    <Link
+                      href={`/map/${metadata.case_id || analysisResult?.case_id || 'latest'}`}
+                      className="flex items-center gap-1 text-xs text-[var(--primary-cyan)] hover:underline"
+                    >
+                      <MapPin className="w-3.5 h-3.5" />
+                      <span>Open Interactive World Map</span>
+                    </Link>
+                  )}
                 </div>
 
-                <div className="relative pl-6 border-l-2 border-[var(--border-subtle)] space-y-6 my-4">
-                  {(relay.length > 0 ? relay : [
-                    { hop_number: 1, from_mta: 'unknown-client', by_mta: 'suspicious-relay.external-net.example', ip: '203.0.113.88', delay_seconds: 4, timestamp: '15:32:01 UTC' },
-                    { hop_number: 2, from_mta: 'suspicious-relay.external-net.example', by_mta: 'mail-gateway.target-corp.example', ip: '198.51.100.42', delay_seconds: 4, timestamp: '15:32:05 UTC' },
-                    { hop_number: 3, from_mta: 'mail-gateway.target-corp.example', by_mta: 'mx1.internal.target-corp.example', ip: '192.0.2.10', delay_seconds: 5, timestamp: '15:32:10 UTC' }
-                  ]).map((hop, idx) => (
-                    <div key={idx} className="relative group">
-                      {/* Node Beacon */}
-                      <span className="absolute -left-[31px] top-1.5 w-3 h-3 rounded-full bg-[var(--surface-floor)] border-2 border-[var(--primary-cyan)] group-hover:bg-[var(--primary-cyan)] transition-colors" />
+                {relay.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-[var(--text-muted)]">
+                    No intermediate transit hops found in Received headers.
+                  </div>
+                ) : (
+                  <div className="relative pl-6 border-l-2 border-[var(--border-subtle)] space-y-6 my-4">
+                    {relay.map((hop, idx) => (
+                      <div key={idx} className="relative group">
+                        {/* Node Beacon */}
+                        <span className="absolute -left-[31px] top-1.5 w-3 h-3 rounded-full bg-[var(--surface-floor)] border-2 border-[var(--primary-cyan)] group-hover:bg-[var(--primary-cyan)] transition-colors" />
 
-                      <div className="p-4 rounded-md bg-[var(--surface-container-low)] border border-[var(--border-subtle)] hover:border-[var(--border-cyan)] transition-all">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-xs font-bold text-[var(--primary-cyan)]">
-                              HOP #{hop.hop_number || idx + 1}
-                            </span>
-                            {idx === 0 && (
-                              <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-400 font-bold border border-rose-500/30">
-                                ORIGIN GATEWAY
+                        <div className="p-4 rounded-md bg-[var(--surface-container-low)] border border-[var(--border-subtle)] hover:border-[var(--border-cyan)] transition-all">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="mono text-xs font-bold text-[var(--primary-cyan)]">
+                                HOP #{hop.hop_number || idx + 1}
                               </span>
-                            )}
+                              {idx === 0 && (
+                                <span className="mono text-[10px] px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-400 font-bold border border-rose-500/30">
+                                  ORIGIN GATEWAY
+                                </span>
+                              )}
+                            </div>
+                            <span className="mono text-xs text-[var(--text-muted)]">
+                              {hop.delay_seconds != null ? `Δ ${hop.delay_seconds}s delay • ` : ''}{hop.timestamp || 'N/A'}
+                            </span>
                           </div>
-                          <span className="font-mono text-xs text-[var(--text-muted)]">
-                            Δ {hop.delay_seconds || 4}s transit delay • {hop.timestamp || 'N/A'}
-                          </span>
-                        </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-xs mt-3 pt-3 border-t border-[var(--border-subtle)]">
-                          <div>
-                            <span className="text-[10px] text-[var(--text-muted)] block">Handoff From MTA</span>
-                            <span className="text-[var(--text-primary)] truncate block">{hop.from_mta || 'Client Direct'}</span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-[var(--text-muted)] block">Received By MTA</span>
-                            <span className="text-[var(--text-primary)] truncate block">{hop.by_mta || 'Next Hop'}</span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-[var(--text-muted)] block">Relay IP Address</span>
-                            <span className="text-[var(--primary-cyan)] font-bold">{hop.ip || '198.51.100.42'}</span>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs mt-3 pt-3 border-t border-[var(--border-subtle)]">
+                            <div>
+                              <span className="text-[10px] text-[var(--text-muted)] block">Handoff From MTA</span>
+                              <span className="mono text-[var(--text-primary)] truncate block">{hop.sending_server || hop.from_mta || 'Client Direct'}</span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-[var(--text-muted)] block">Received By MTA</span>
+                              <span className="mono text-[var(--text-primary)] truncate block">{hop.receiving_server || hop.by_mta || 'Next Hop'}</span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-[var(--text-muted)] block">Node IP & Type</span>
+                              <span className="mono text-emerald-400 truncate block">{hop.ip || 'Unresolved'}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1038,89 +1037,98 @@ Subject: ..."
             <div className="space-y-6">
               {/* Extracted Hyperlinks Table */}
               <div className="glass-panel p-6 rounded-lg border border-[var(--border-subtle)]">
-                <h3 className="font-mono text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-4 pb-2 border-b border-[var(--border-subtle)]">
-                  Dissected Hyperlinks & In-Line URLs ({iocs.urls?.length || 2} Extracted)
+                <h3 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-4 pb-2 border-b border-[var(--border-subtle)]">
+                  Extracted Links ({iocs.urls?.length || 0} Found)
                 </h3>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left font-mono text-xs">
-                    <thead>
-                      <tr className="border-b border-[var(--border-subtle)] text-[var(--text-muted)] text-[11px]">
-                        <th className="py-2 px-3">Target URL</th>
-                        <th className="py-2 px-3">Resolved Domain / Host</th>
-                        <th className="py-2 px-3">Risk Assessment</th>
-                        <th className="py-2 px-3 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[var(--border-subtle)]">
-                      {(iocs.urls?.length > 0
-                        ? iocs.urls
-                        : [
-                            'http://198.51.100.42/portal/login?id=9928',
-                            'https://secure-invoice-verification.xyz/payment/auth.php'
-                          ]
-                      ).map((url, idx) => {
-                        const isIpUrl = url.includes('198.51.100') || url.includes('//1');
-                        return (
-                          <tr key={idx} className="zebra-row hover:bg-[var(--surface-container-high)]/40 transition-colors">
-                            <td className="py-2.5 px-3 text-[var(--text-primary)] max-w-md truncate">
-                              {url}
-                            </td>
-                            <td className="py-2.5 px-3 text-[var(--text-secondary)] whitespace-nowrap">
-                              {url.split('/')[2] || 'unknown'}
-                            </td>
-                            <td className="py-2.5 px-3 whitespace-nowrap">
-                              <span
-                                className={`font-mono text-[10px] font-bold px-2 py-0.5 rounded ${
-                                  isIpUrl
-                                    ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
-                                    : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
-                                }`}
-                              >
-                                {isIpUrl ? 'HIGH RISK: RAW IP HOST' : 'SUSPICIOUS TLD .XYZ'}
-                              </span>
-                            </td>
-                            <td className="py-2.5 px-3 text-right">
-                              <button
-                                onClick={() => handleCopy(url, `url_${idx}`)}
-                                className="text-[var(--text-muted)] hover:text-[var(--primary-cyan)] transition-colors"
-                                title="Copy defanged URL"
-                              >
-                                {copiedText === `url_${idx}` ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                {(!iocs.urls || iocs.urls.length === 0) ? (
+                  <div className="py-8 text-center text-xs text-[var(--text-muted)]">
+                    No hyperlinks detected in email body.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead>
+                        <tr className="border-b border-[var(--border-subtle)] text-[var(--text-muted)] text-[11px]">
+                          <th className="py-2 px-3">Target URL</th>
+                          <th className="py-2 px-3">Domain / Host</th>
+                          <th className="py-2 px-3">Risk Assessment</th>
+                          <th className="py-2 px-3 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[var(--border-subtle)]">
+                        {iocs.urls.map((url, idx) => {
+                          const isIpUrl = /https?:\/\/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/i.test(url);
+                          const isSuspiciousTld = /\.(xyz|top|work|click|link|info|live)\b/i.test(url);
+                          return (
+                            <tr key={idx} className="zebra-row hover:bg-[var(--surface-container-high)]/40 transition-colors">
+                              <td className="py-2.5 px-3 mono text-[var(--text-primary)] max-w-md truncate">
+                                {url}
+                              </td>
+                              <td className="py-2.5 px-3 mono text-[var(--text-secondary)] whitespace-nowrap">
+                                {url.split('/')[2] || 'unknown'}
+                              </td>
+                              <td className="py-2.5 px-3 whitespace-nowrap">
+                                <span
+                                  className={`mono text-[10px] font-bold px-2 py-0.5 rounded border ${
+                                    isIpUrl
+                                      ? 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+                                      : isSuspiciousTld
+                                      ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                                      : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                                  }`}
+                                >
+                                  {isIpUrl ? 'HIGH RISK: RAW IP HOST' : isSuspiciousTld ? 'SUSPICIOUS TLD' : 'STANDARD URL'}
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-3 text-right">
+                                <button
+                                  onClick={() => handleCopy(url, `url_${idx}`)}
+                                  className="text-[var(--text-muted)] hover:text-[var(--primary-cyan)] transition-colors cursor-pointer"
+                                  title="Copy URL"
+                                >
+                                  {copiedText === `url_${idx}` ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
 
               {/* Extracted Entities Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="glass-panel p-6 rounded-lg border border-[var(--border-subtle)]">
-                  <h4 className="font-mono text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-3">
-                    Observed Domain Reputations
+                  <h4 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-3">
+                    Observed Domains ({iocs.domains?.length || 0})
                   </h4>
-                  <ul className="space-y-2 font-mono text-xs divide-y divide-[var(--border-subtle)]">
-                    <li className="pt-2 flex items-center justify-between">
-                      <span className="text-[var(--text-primary)]">legit-corp.example</span>
-                      <span className="text-[10px] font-bold text-amber-400">Target of Spoofing</span>
-                    </li>
-                    <li className="pt-2 flex items-center justify-between">
-                      <span className="text-rose-400">external-secure-portal.xyz</span>
-                      <span className="text-[10px] font-bold text-rose-400">Attacker Drop Domain</span>
-                    </li>
-                  </ul>
+                  {(!iocs.domains || iocs.domains.length === 0) ? (
+                    <p className="text-xs text-[var(--text-muted)] py-4 text-center">
+                      No external domains detected.
+                    </p>
+                  ) : (
+                    <ul className="space-y-2 text-xs divide-y divide-[var(--border-subtle)]">
+                      {iocs.domains.map((domain, idx) => (
+                        <li key={idx} className="pt-2 flex items-center justify-between">
+                          <span className="mono text-[var(--text-primary)] font-medium">{domain}</span>
+                          <span className="text-[10px] font-bold text-[var(--text-muted)]">Extracted</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
 
                 <div className="glass-panel p-6 rounded-lg border border-[var(--border-subtle)]">
-                  <h4 className="font-mono text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-3">
+                  <h4 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-3">
                     Attachment Forensics
                   </h4>
-                  <p className="font-mono text-xs text-[var(--text-muted)] leading-relaxed">
-                    No executable binaries attached. Attack vector relies on HTML hyperlink redirection and credential harvesting.
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                    {metadata.attachments && metadata.attachments.length > 0
+                      ? `${metadata.attachments.length} attachment(s) identified in message payload.`
+                      : 'No executable binaries or files attached in this message.'}
                   </p>
                 </div>
               </div>
@@ -1135,8 +1143,8 @@ Subject: ..."
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {/* SVG Threat Radial Gauge (Span 5) */}
                 <div className="lg:col-span-5 glass-panel p-6 rounded-lg border border-[var(--border-subtle)] flex flex-col items-center justify-center text-center">
-                  <span className="font-mono text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-4">
-                    Forensic Threat Probability
+                  <span className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-4">
+                    Threat Score
                   </span>
 
                   {/* SVG Gauge */}
@@ -1154,84 +1162,82 @@ Subject: ..."
                         cx="50"
                         cy="50"
                         r="42"
-                        className="stroke-rose-500 transition-all duration-1000 ease-out"
+                        className={`transition-all duration-1000 ease-out ${
+                          (risk.score ?? 0) >= 60
+                            ? 'stroke-rose-500'
+                            : (risk.score ?? 0) >= 35
+                            ? 'stroke-amber-500'
+                            : 'stroke-emerald-500'
+                        }`}
                         strokeWidth="8"
                         fill="transparent"
                         strokeDasharray={2 * Math.PI * 42}
-                        strokeDashoffset={2 * Math.PI * 42 * (1 - (risk.score || 88) / 100)}
+                        strokeDashoffset={2 * Math.PI * 42 * (1 - (risk.score ?? 0) / 100)}
                         strokeLinecap="round"
                       />
                     </svg>
                     <div className="absolute flex flex-col items-center justify-center">
-                      <span className="text-4xl font-bold font-mono text-rose-500 tracking-tight">
-                        {risk.score ?? 88}
+                      <span className={`text-4xl font-bold mono tracking-tight ${
+                        (risk.score ?? 0) >= 60
+                          ? 'text-rose-500'
+                          : (risk.score ?? 0) >= 35
+                          ? 'text-amber-500'
+                          : 'text-emerald-500'
+                      }`}>
+                        {risk.score ?? 0}
                       </span>
-                      <span className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider">
-                        / 100 INDEX
+                      <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">
+                        / 100
                       </span>
                     </div>
                   </div>
 
                   <div className="mt-3">
-                    <span className="font-mono text-xs font-bold px-3 py-1 rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/30">
-                      {risk.classification || 'CRITICAL BEC / PHISHING'}
+                    <span className={`text-xs font-bold px-3 py-1 rounded-full border ${
+                      (risk.score ?? 0) >= 60
+                        ? 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+                        : (risk.score ?? 0) >= 35
+                        ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                        : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                    }`}>
+                      {risk.classification || 'CLEAN'}
                     </span>
-                    <p className="text-xs font-mono text-[var(--text-muted)] mt-2">
-                      High confidence malicious intent. Automated quarantine recommended.
+                    <p className="text-xs text-[var(--text-muted)] mt-2">
+                      {(risk.score ?? 0) >= 60
+                        ? 'High threat probability. Flagged for review.'
+                        : (risk.score ?? 0) >= 35
+                        ? 'Suspicious indicators detected.'
+                        : 'No critical threats detected.'}
                     </p>
                   </div>
                 </div>
 
                 {/* Contributing Risk Factors (Span 7) */}
                 <div className="lg:col-span-7 glass-panel p-6 rounded-lg border border-[var(--border-subtle)] flex flex-col justify-between">
-                  <h3 className="font-mono text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-4 pb-2 border-b border-[var(--border-subtle)]">
-                    Scoring Attribution Breakdown
+                  <h3 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-4 pb-2 border-b border-[var(--border-subtle)]">
+                    Triggered Risk Signals ({signals.length})
                   </h3>
 
-                  <div className="space-y-4 font-mono text-xs">
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-[var(--text-primary)]">Cryptographic Authentication Failure (SPF/DKIM/DMARC)</span>
-                        <span className="text-rose-400 font-bold">+35 pts</span>
-                      </div>
-                      <div className="w-full h-1.5 rounded-full bg-[var(--surface-container-high)] overflow-hidden">
-                        <div className="h-full bg-rose-500 rounded-full w-[85%]" />
-                      </div>
+                  {signals.length > 0 ? (
+                    <div className="space-y-3">
+                      {signals.map((sig, idx) => (
+                        <div key={idx} className="p-3 rounded-lg bg-[var(--surface-container-low)] border border-[var(--border-subtle)]">
+                          <div className="flex items-center justify-between text-xs mb-1">
+                            <span className="font-semibold text-[var(--text-primary)]">{sig.name}</span>
+                            <span className="mono font-bold text-rose-400">+{sig.score_impact} pts</span>
+                          </div>
+                          <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">{sig.description}</p>
+                        </div>
+                      ))}
                     </div>
-
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-[var(--text-primary)]">Financial Transaction & Wire Transfer Intent (BEC)</span>
-                        <span className="text-rose-400 font-bold">+25 pts</span>
-                      </div>
-                      <div className="w-full h-1.5 rounded-full bg-[var(--surface-container-high)] overflow-hidden">
-                        <div className="h-full bg-rose-500 rounded-full w-[70%]" />
-                      </div>
+                  ) : (
+                    <div className="py-8 text-center text-xs text-[var(--text-muted)]">
+                      No adverse risk signals triggered. Email passed baseline heuristic criteria.
                     </div>
+                  )}
 
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-[var(--text-primary)]">Sender Envelope Impersonation / Return-Path Mismatch</span>
-                        <span className="text-amber-400 font-bold">+18 pts</span>
-                      </div>
-                      <div className="w-full h-1.5 rounded-full bg-[var(--surface-container-high)] overflow-hidden">
-                        <div className="h-full bg-amber-500 rounded-full w-[50%]" />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-[var(--text-primary)]">Suspicious Raw IP Hyperlinks & Typosquatting</span>
-                        <span className="text-amber-400 font-bold">+10 pts</span>
-                      </div>
-                      <div className="w-full h-1.5 rounded-full bg-[var(--surface-container-high)] overflow-hidden">
-                        <div className="h-full bg-amber-500 rounded-full w-[35%]" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 pt-3 border-t border-[var(--border-subtle)] text-[11px] font-mono text-[var(--text-muted)]">
-                    Aggregated by SIH26106 RoBERTa Forensic Ensemble & Risk Rules Engine.
+                  <div className="mt-6 pt-3 border-t border-[var(--border-subtle)] text-[11px] text-[var(--text-muted)]">
+                    Scoring calculated deterministically from authentication, headers, and content analysis.
                   </div>
                 </div>
               </div>
@@ -1246,73 +1252,73 @@ Subject: ..."
               <div className="glass-panel p-6 rounded-lg border border-[var(--border-subtle)]">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-4 border-b border-[var(--border-subtle)]">
                   <div>
-                    <span className="font-mono text-xs font-bold text-emerald-400 uppercase tracking-wider block mb-1">
-                      Court-Admissible Forensic Custody
+                    <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider block mb-1">
+                      Evidence Custody
                     </span>
-                    <h3 className="font-mono text-lg font-bold text-[var(--text-primary)]">
-                      Digital Certificate of Evidence Integrity
+                    <h3 className="text-lg font-bold text-[var(--text-primary)]">
+                      Evidence Integrity Record
                     </h3>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold px-2.5 py-1 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+                    <span className="text-xs font-bold px-2.5 py-1 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>SEALED & IMMUTABLE</span>
+                      <span>VERIFIED & SEALED</span>
                     </span>
                   </div>
                 </div>
 
                 {/* Hash & Metadata Table */}
-                <div className="space-y-4 font-mono text-xs">
+                <div className="space-y-4 text-xs">
                   <div className="p-4 rounded-md bg-[var(--surface-container-low)] border border-[var(--border-subtle)]">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">
-                        SHA-256 Bitstream Hash (RFC 3174)
+                        SHA-256 Payload Hash
                       </span>
                       <button
-                        onClick={() => handleCopy(metadata.sha256 || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 'sha256_custody')}
-                        className="flex items-center gap-1 text-[11px] text-[var(--primary-cyan)] hover:underline"
+                        onClick={() => handleCopy(metadata.sha256 || metadata.sha256_hash || 'N/A', 'sha256_custody')}
+                        className="flex items-center gap-1 text-[11px] text-[var(--primary-cyan)] hover:underline cursor-pointer"
                       >
                         {copiedText === 'sha256_custody' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                         <span>{copiedText === 'sha256_custody' ? 'Copied' : 'Copy Hash'}</span>
                       </button>
                     </div>
-                    <div className="font-bold text-[var(--primary-cyan)] break-all text-xs">
-                      {metadata.sha256 || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'}
+                    <div className="mono font-bold text-[var(--primary-cyan)] break-all text-xs">
+                      {metadata.sha256 || metadata.sha256_hash || 'N/A'}
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="p-3 rounded-md bg-[var(--surface-container-low)] border border-[var(--border-subtle)]">
                       <span className="text-[10px] text-[var(--text-muted)] uppercase block mb-1">Case Identifier</span>
-                      <span className="font-bold text-[var(--text-primary)]">{metadata.case_id || 'CASE-20260907-88DF'}</span>
+                      <span className="mono font-bold text-[var(--text-primary)]">{metadata.case_id || analysisResult?.case_id || 'Pending'}</span>
                     </div>
 
                     <div className="p-3 rounded-md bg-[var(--surface-container-low)] border border-[var(--border-subtle)]">
-                      <span className="text-[10px] text-[var(--text-muted)] uppercase block mb-1">Ingested File Size</span>
-                      <span className="font-bold text-[var(--text-primary)]">{metadata.file_size ? `${metadata.file_size} Bytes` : '2,699 Bytes'}</span>
+                      <span className="text-[10px] text-[var(--text-muted)] uppercase block mb-1">File Size</span>
+                      <span className="mono font-bold text-[var(--text-primary)]">{metadata.file_size ? `${metadata.file_size} Bytes` : file?.size ? `${file.size} Bytes` : 'N/A'}</span>
                     </div>
 
                     <div className="p-3 rounded-md bg-[var(--surface-container-low)] border border-[var(--border-subtle)]">
                       <span className="text-[10px] text-[var(--text-muted)] uppercase block mb-1">Timestamp (UTC)</span>
-                      <span className="font-bold text-[var(--text-primary)]">{metadata.analysis_timestamp || new Date().toISOString()}</span>
+                      <span className="mono font-bold text-[var(--text-primary)]">{metadata.analysis_timestamp || new Date().toISOString()}</span>
                     </div>
 
                     <div className="p-3 rounded-md bg-[var(--surface-container-low)] border border-[var(--border-subtle)]">
-                      <span className="text-[10px] text-[var(--text-muted)] uppercase block mb-1">Standard Reference</span>
-                      <span className="font-bold text-emerald-400">NIST SP 800-86</span>
+                      <span className="text-[10px] text-[var(--text-muted)] uppercase block mb-1">Status</span>
+                      <span className="font-bold text-emerald-400">Persisted</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 font-mono text-xs">
+                <div className="mt-6 pt-4 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
                   <span className="text-[var(--text-muted)]">
-                    Evidence record permanently committed to SQLite database <code className="text-[var(--text-secondary)]">backend/forensics.db</code>.
+                    Evidence record committed to database.
                   </span>
                   <Link
-                    href={`/report/${metadata.case_id || 'latest'}`}
+                    href={`/report/${metadata.case_id || analysisResult?.case_id || 'latest'}`}
                     className="flex items-center gap-1.5 text-[var(--primary-cyan)] font-bold hover:underline"
                   >
-                    <span>View Formal Court Dossier</span>
+                    <span>View Report</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </Link>
                 </div>

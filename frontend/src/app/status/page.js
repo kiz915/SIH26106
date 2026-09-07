@@ -133,36 +133,36 @@ export default function StatusPage() {
         className="glass-card p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border-t-2 border-t-[var(--primary-cyan)]"
       >
         <div className="space-y-2 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
             <Activity className="w-3.5 h-3.5 text-emerald-500" />
-            <span>REAL-TIME SYSTEM DIAGNOSTICS</span>
+            <span>SYSTEM STATUS</span>
           </div>
-          <h1 className="text-3xl font-black text-[var(--text-primary)] tracking-tight">
-            Node Telemetry & Service Health
+          <h1 className="text-3xl font-bold text-[var(--text-primary)] tracking-tight">
+            System Status
           </h1>
           <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-            Live health telemetry verifying network connectivity, FastAPI forensic kernel latency, SQLite evidence storage, and client-side cryptographic subsystems.
+            Live service status, API latency, and database connectivity.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="text-right font-mono text-xs text-[var(--text-muted)] hidden sm:block">
-            <div>Last Probe: {lastChecked || 'Checking...'}</div>
-            <div className="text-[10px]">Ping: {apiLatency ? `${apiLatency}ms` : 'N/A'}</div>
+          <div className="text-right text-xs text-[var(--text-muted)] hidden sm:block">
+            <div>Last checked: {lastChecked || 'Checking...'}</div>
+            <div className="text-[10px] mono">Ping: {apiLatency ? `${apiLatency}ms` : 'N/A'}</div>
           </div>
           <button
             onClick={runDiagnostics}
             disabled={loading}
-            className="btn-cyber-primary flex items-center gap-2 px-5 py-3 rounded-xl font-mono text-xs font-bold shadow-md hover:scale-105 transition-transform shrink-0 cursor-pointer"
+            className="btn-cyber-primary flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold shadow-md shrink-0 cursor-pointer"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            <span>RUN FULL DIAGNOSTIC</span>
+            <span>Run Diagnostics</span>
           </button>
         </div>
       </motion.div>
 
       {/* Primary Overall Health Strip */}
-      <div className={`p-4 sm:p-5 rounded-2xl border font-mono flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
+      <div className={`p-4 sm:p-5 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
         isApiOnline && isDbOnline
           ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
           : 'bg-rose-500/10 border-rose-500/30 text-rose-700 dark:text-rose-300'
@@ -176,8 +176,8 @@ export default function StatusPage() {
           <div>
             <p className="font-bold text-sm">
               {isApiOnline && isDbOnline
-                ? 'ALL FORENSIC SUBSYSTEMS NOMINAL & VERIFIED'
-                : 'BACKEND DEGRADED OR OFFLINE'}
+                ? 'All systems operational'
+                : 'Backend offline or degraded'}
             </p>
             <p className="text-xs opacity-80 mt-0.5">
               {isApiOnline && isDbOnline

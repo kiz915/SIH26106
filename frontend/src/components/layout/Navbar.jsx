@@ -22,12 +22,12 @@ import { checkHealth } from '@/lib/api';
 import { useTheme } from '@/context/ThemeContext';
 
 const navItems = [
-  { href: '/', label: 'Command Center', icon: LayoutDashboard },
-  { href: '/analyze', label: 'Deep Analysis', icon: Upload },
-  { href: '/cases', label: 'Case Vault', icon: FolderArchive },
-  { href: '/blockchain', label: 'Forensic Ledger', icon: Blocks },
-  { href: '/map', label: 'Threat Map', icon: Map },
-  { href: '/status', label: 'Diagnostics', icon: Activity },
+  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/analyze', label: 'Analysis', icon: Upload },
+  { href: '/cases', label: 'Cases', icon: FolderArchive },
+  { href: '/blockchain', label: 'Ledger', icon: Blocks },
+  { href: '/map', label: 'Map', icon: Map },
+  { href: '/status', label: 'Status', icon: Activity },
 ];
 
 export default function Navbar() {
@@ -72,16 +72,11 @@ export default function Navbar() {
               <Shield className="w-4 h-4 text-[var(--primary-cyan)]" />
             </div>
             <div className="flex flex-col">
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-bold tracking-tight text-[var(--text-primary)] font-mono leading-none">
-                  Threat<span className="text-[var(--primary-cyan)]">Lens</span>
-                </span>
-                <span className="text-[10px] font-mono font-semibold px-1.5 py-[1px] rounded bg-[var(--surface-container-high)] text-[var(--text-muted)] border border-[var(--border-subtle)] leading-none">
-                  v4.2
-                </span>
-              </div>
-              <span className="text-[9px] font-mono tracking-wider text-[var(--text-muted)] uppercase leading-tight mt-0.5">
-                Forensic Email Intelligence
+              <span className="text-sm font-bold tracking-tight text-[var(--text-primary)] leading-none">
+                Threat<span className="text-[var(--primary-cyan)]">Lens</span>
+              </span>
+              <span className="text-[9px] tracking-wider text-[var(--text-muted)] uppercase leading-tight mt-0.5">
+                Email Forensics
               </span>
             </div>
           </Link>
@@ -94,7 +89,7 @@ export default function Navbar() {
                 <Link
                   key={href}
                   href={href}
-                  className={`relative flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-mono font-medium whitespace-nowrap shrink-0 transition-colors ${
+                  className={`relative flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap shrink-0 transition-colors ${
                     isActive
                       ? 'text-[var(--primary-cyan)] bg-[var(--primary-cyan)]/10 font-bold border border-[var(--border-cyan)]'
                       : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-container-high)] border border-transparent'
@@ -116,10 +111,10 @@ export default function Navbar() {
             {/* Quick Ingest Button */}
             <Link
               href="/analyze"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-mono font-bold bg-[var(--primary-cyan)] text-[#05070b] hover:brightness-110 transition-all shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold bg-[var(--primary-cyan)] text-[#05070b] hover:brightness-110 transition-all shadow-sm"
             >
               <PlusCircle className="w-3.5 h-3.5" />
-              <span>Ingest EML</span>
+              <span>Analyze Email</span>
             </Link>
 
             {/* Live Backend Telemetry Pill */}
@@ -191,7 +186,7 @@ export default function Navbar() {
                 key={href}
                 href={href}
                 onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-mono font-medium transition-colors ${
+                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive
                     ? 'text-[var(--primary-cyan)] bg-[var(--primary-cyan)]/10 font-bold border border-[var(--border-cyan)]'
                     : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-container-high)]'
@@ -206,10 +201,10 @@ export default function Navbar() {
             <Link
               href="/analyze"
               onClick={() => setMobileOpen(false)}
-              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-md text-xs font-mono font-bold bg-[var(--primary-cyan)] text-[#05070b]"
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-md text-xs font-bold bg-[var(--primary-cyan)] text-[#05070b]"
             >
               <PlusCircle className="w-4 h-4" />
-              <span>Ingest New Email</span>
+              <span>Analyze Email</span>
             </Link>
           </div>
         </div>
