@@ -6,7 +6,7 @@ import pytest
 import os
 from fastapi.testclient import TestClient
 from backend.main import app
-from backend.analyzer import analyze_email_bytes
+from backend.analyzer import analyze_email_bytes, analyze_email_bytes_frontend
 from backend.models import RiskClassification, AuthStatus
 
 client = TestClient(app)
@@ -53,7 +53,7 @@ def test_analyze_malformed_email():
     malformed_bytes = b"Some random garbage not conforming to RFC5322\n\nBody content."
     result = analyze_email_bytes(malformed_bytes, file_name="corrupted.eml")
     assert result.case_id.startswith("CASE-")
-    assert result.metadata.parser_version == "1.0.0-prototype"
+    assert result.metadata.parser_version == "1.0.0-ml-integrated"
 
 
 def test_analyze_suspicious_sample_email():
@@ -125,7 +125,8 @@ def test_post_analyze_api_endpoint():
     assert "email" in data
     assert "from" in data["email"]
     assert "authentication" in data
-    assert data["authentication"]["spf"] == "FAIL"
+    # Frontend shape: authentication.spf is an object with status/detail
+    assert data["authentication"]["spf"]["status"] == "FAIL"
     assert "iocs" in data
     assert len(data["iocs"]["urls"]) > 0
     assert "relay_path" in data

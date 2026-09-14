@@ -5,14 +5,15 @@ FastAPI Application Entry Point with Case Management & Evidence Persistence.
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 import logging
-from typing import Optional
+import json
+from typing import Optional, Dict, Any
 
-from backend.models import EmailAnalysisResponse, HealthResponse
-from backend.db_models import CaseListResponse, CaseDetailResponse, EvidenceRecord
+from backend.models import HealthResponse
+from backend.db_models import CaseListResponse, CaseDetailResponse, EvidenceRecord, AnalysisRecord
 from backend.analyzer import PARSER_VERSION
 from backend.database import init_db
 from backend.case_service import CaseService
@@ -106,8 +107,6 @@ async def health():
 
 @app.post(
     "/analyze",
-    response_model=EmailAnalysisResponse,
-    response_model_by_alias=True,
     tags=["Analysis"],
     summary="Analyze .eml email file and persist case evidence"
 )
@@ -146,6 +145,7 @@ async def analyze_email(file: UploadFile = File(...)):
         )
 
     try:
+        # returns frontend-shaped dict via ml_bridge
         analysis_result = case_service.process_and_store_email(
             raw_bytes=content,
             filename=file.filename
@@ -177,7 +177,6 @@ async def list_cases(
 
 @app.get(
     "/cases/{case_id}",
-    response_model=CaseDetailResponse,
     tags=["Cases"],
     summary="Get case details and forensic analysis report"
 )
@@ -189,6 +188,7 @@ async def get_case(case_id: str):
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Case with ID '{case_id}' was not found."
         )
+    # The case_detail.analysis is already the frontend-shaped JSON from DB
     return case_detail
 
 
@@ -207,6 +207,117 @@ async def get_case_evidence(case_id: str):
             detail=f"Evidence for case ID '{case_id}' was not found."
         )
     return evidence
+
+
+@app.get(
+    "/cases/{case_id}/geo",
+    tags=["Cases"],
+    summary="Get geolocation intelligence for a specific case"
+)
+async def get_case_geo(case_id: str):
+    """Returns geolocation and network intelligence for all IPs associated with a case."""
+    case_detail = case_service.get_case_detail(case_id)
+    if not case_detail or not case_detail.analysis:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case or analysis not found.")
+    
+    # Return the ip_intelligence part of the frontend-shaped analysis
+    return {
+        "case_id": case_id,
+        "ip_intelligence": case_detail.analysis.get("ip_intelligence", []),
+        "domain_intelligence": case_detail.analysis.get("domain_intelligence", [])
+    }
+
+
+# ============ REPORT ENDPOINTS ============
+
+@app.get(
+    "/cases/{case_id}/report",
+    tags=["Reports"],
+    summary="Get forensic report with narrative summary"
+)
+async def get_case_report(case_id: str):
+    """Returns JSON report with AI-generated or deterministic narrative summary."""
+    case_detail = case_service.get_case_detail(case_id)
+    if not case_detail or not case_detail.analysis:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case or analysis not found.")
+    
+    analysis = case_detail.analysis
+    evidence = case_detail.evidence
+    
+    # Check if narrative already stored
+    narrative = analysis.get("metadata", {}).get("narrative")
+    
+    if not narrative:
+        # Generate narrative
+        narrative = await generate_narrative(analysis)
+        # Store narrative in metadata
+        if "metadata" in analysis:
+            analysis["metadata"]["narrative"] = narrative
+            # Update DB
+            try:
+                case_service.analysis_repo.save_analysis(
+                    AnalysisRecord(
+                        case_id=case_id,
+                        analysis_json=json.dumps(analysis),
+                        analysis_timestamp=analysis["metadata"]["analysis_timestamp"],
+                        parser_version=analysis["metadata"]["parser_version"],
+                    )
+                )
+            except Exception as exc:
+                logger.warning(f"Failed to persist narrative: {exc}")
+    
+    return {
+        "case_id": case_id,
+        "analysis": analysis,
+        "evidence": evidence.model_dump() if evidence else None,
+        "narrative": narrative,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+@app.get(
+    "/cases/{case_id}/report/pdf",
+    tags=["Reports"],
+    summary="Get forensic report as PDF"
+)
+async def get_case_report_pdf(case_id: str):
+    """Returns PDF forensic report."""
+    case_detail = case_service.get_case_detail(case_id)
+    if not case_detail or not case_detail.analysis:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case or analysis not found.")
+    
+    analysis = case_detail.analysis
+    evidence = case_detail.evidence
+    
+    try:
+        pdf_bytes = generate_pdf_report(case_id, analysis, evidence)
+        return StreamingResponse(
+            iter([pdf_bytes]),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename=ThreatLens-Report-{case_id}.pdf"}
+        )
+    except ImportError:
+        # ReportLab not installed - return JSON with gap info
+        logger.warning("ReportLab not installed, returning JSON instead of PDF")
+        return JSONResponse(
+            status_code=501,
+            content={
+                "error": "PDF generation unavailable",
+                "detail": "ReportLab library not installed. Install with: pip install reportlab",
+                "json_report": {
+                    "case_id": case_id,
+                    "analysis": analysis,
+                    "evidence": evidence.model_dump() if evidence else None,
+                    "generated_at": datetime.now(timezone.utc).isoformat(),
+                }
+            }
+        )
+    except Exception as exc:
+        logger.error(f"PDF generation failed: {exc}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate PDF report: {str(exc)}"
+        )
 
 
 # ============ BLOCKCHAIN ENDPOINTS ============
@@ -299,18 +410,16 @@ async def verify_evidence_blockchain(evidence_id: str):
         )
     
     try:
-        # Get evidence from blockchain first to check if it exists
-        blockchain_evidence = blockchain_service.get_evidence(evidence_id)
-        
-        if not blockchain_evidence:
+        # In a real scenario, we would recalculate the hash from the evidence file.
+        # Here we get it from the DB as the "current" hash to verify registration.
+        evidence_record = case_service.evidence_repo.get_evidence(evidence_id)
+        if not evidence_record:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Evidence ID '{evidence_id}' not found on blockchain."
+                detail=f"Evidence record {evidence_id} not found in local database."
             )
         
-        # For demo purposes, we'll use the blockchain hash as the "current" hash
-        # In a real scenario, you would recalculate the hash from the actual evidence file
-        current_hash = blockchain_evidence["evidence_hash"]
+        current_hash = evidence_record.sha256
         
         result = blockchain_service.verify_evidence(
             evidence_id=evidence_id,
@@ -351,12 +460,266 @@ async def get_blockchain_evidence(evidence_id: str):
             )
         
         return evidence
-        
-    except HTTPException:
-        raise
     except Exception as exc:
         logger.error(f"Failed to retrieve blockchain evidence {evidence_id}: {exc}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve evidence from blockchain: {str(exc)}"
         )
+
+
+# ============ REPORT GENERATION HELPERS ============
+
+async def generate_narrative(analysis: Dict[str, Any]) -> str:
+    """
+    Generate narrative summary for the forensic report.
+    Tries Ollama llama3.2:3b first, falls back to deterministic template.
+    """
+    risk = analysis.get("risk", {})
+    score = risk.get("score", 0)
+    classification = risk.get("classification", "UNKNOWN")
+    reasons = risk.get("reasons", [])
+    ml_signals = risk.get("ml_signals", {})
+    
+    email = analysis.get("email", {})
+    subject = email.get("subject", "No Subject")
+    from_addr = email.get("from_address", "Unknown")
+    
+    # Top 3 reasons
+    top_reasons = reasons[:3] if reasons else ["No specific forensic signals detected."]
+    
+    # Try Ollama
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(
+                "http://localhost:11434/api/generate",
+                json={
+                    "model": "llama3.2:3b",
+                    "prompt": f"""Write a concise forensic narrative (150-220 words) for an email threat analysis report.
+
+Case Details:
+- Threat Type: {classification}
+- Risk Score: {score}/100
+- Subject: {subject}
+- Sender: {from_addr}
+- Phishing Probability: {ml_signals.get('phishing_probability', 'N/A')}
+- BEC Probability: {ml_signals.get('bec_probability', 'N/A')}
+- Model: {ml_signals.get('model_name', 'ThreatLens-DistilBERT-v1')}
+- Confidence: {ml_signals.get('confidence', 'N/A')}
+
+Key Evidence:
+{chr(10).join(f'- {r}' for r in top_reasons)}
+
+Required narrative elements:
+1. Threat type assessment
+2. Key evidence summary
+3. Origin assessment with confidence
+4. Recommended action
+
+Write in professional forensic tone.""",
+                    "stream": False,
+                    "options": {"temperature": 0.2}
+                }
+            )
+            if response.status_code == 200:
+                result = response.json()
+                narrative = result.get("response", "").strip()
+                if len(narrative) >= 100:
+                    return narrative
+    except Exception as exc:
+        logger.info(f"Ollama unavailable, using template narrative: {exc}")
+    
+    # Deterministic fallback template
+    threat_type = "Business Email Compromise" if "CRITICAL" in classification or "HIGH" in classification else \
+                  "Phishing" if "PHISHING" in str(ml_signals.get("classification", {})).upper() else \
+                  "Suspicious Email"
+    
+    origin_confidence = "HIGH" if ml_signals.get("confidence", 0) > 0.7 else "MEDIUM" if ml_signals.get("confidence", 0) > 0.4 else "LOW"
+    
+    action = "Immediate quarantine and incident response initiation recommended." if "CRITICAL" in classification else \
+             "Block sender domain and escalate to SOC for review." if "HIGH" in classification else \
+             "Monitor and apply enhanced filtering rules."
+    
+    narrative = (
+        f"Threat Assessment: {threat_type} ({classification}). "
+        f"Forensic analysis of email from {from_addr} with subject '{subject}' yielded a risk score of {score}/100. "
+        f"Primary indicators include: {'; '.join(top_reasons)}. "
+        f"ML engine ({ml_signals.get('model_name', 'ThreatLens-DistilBERT-v1')}) assessed "
+        f"phishing probability at {ml_signals.get('phishing_probability', 0):.0%} and "
+        f"BEC probability at {ml_signals.get('bec_probability', 0):.0%} with {origin_confidence} confidence. "
+        f"Origin infrastructure analysis suggests {origin_confidence.lower()} confidence attribution. "
+        f"{action}"
+    )
+    
+    return narrative
+
+
+def generate_pdf_report(case_id: str, analysis: Dict[str, Any], evidence: Optional[EvidenceRecord]) -> bytes:
+    """
+    Generate PDF forensic report using ReportLab.
+    Returns PDF bytes.
+    """
+    try:
+        from reportlab.lib.pagesizes import letter, A4
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch
+        from reportlab.lib.colors import HexColor
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+        from reportlab.lib.enums import TA_LEFT, TA_CENTER
+        from io import BytesIO
+    except ImportError:
+        raise ImportError("ReportLab not installed")
+    
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=72)
+    styles = getSampleStyleSheet()
+    
+    # Custom styles
+    title_style = ParagraphStyle('CustomTitle', parent=styles['Heading1'], fontSize=18, textColor=HexColor('#00e5ff'), spaceAfter=12)
+    heading_style = ParagraphStyle('CustomHeading', parent=styles['Heading2'], fontSize=14, textColor=HexColor('#ffa000'), spaceBefore=12, spaceAfter=6)
+    subheading_style = ParagraphStyle('CustomSubHeading', parent=styles['Heading3'], fontSize=11, textColor=HexColor('#ffffff'), spaceBefore=8, spaceAfter=4)
+    body_style = ParagraphStyle('CustomBody', parent=styles['Normal'], fontSize=9, textColor=HexColor('#cccccc'), spaceAfter=4)
+    mono_style = ParagraphStyle('CustomMono', parent=styles['Normal'], fontName='Courier', fontSize=8, textColor=HexColor('#888888'), spaceAfter=2)
+    
+    story = []
+    
+    # Title
+    story.append(Paragraph("THREATLENS FORENSIC ANALYSIS REPORT", title_style))
+    story.append(Paragraph(f"Case ID: {case_id}", subheading_style))
+    story.append(Spacer(1, 12))
+    
+    # Metadata
+    meta = analysis.get("metadata", {})
+    story.append(Paragraph("EXECUTIVE SUMMARY", heading_style))
+    story.append(Paragraph(f"<b>File:</b> {meta.get('file_name', 'N/A')}", body_style))
+    story.append(Paragraph(f"<b>Size:</b> {meta.get('file_size_bytes', 0)} bytes", body_style))
+    story.append(Paragraph(f"<b>Analyzed:</b> {meta.get('analysis_timestamp', 'N/A')}", body_style))
+    story.append(Paragraph(f"<b>Parser Version:</b> {meta.get('parser_version', 'N/A')}", body_style))
+    story.append(Paragraph(f"<b>Evidence Hash:</b> {meta.get('evidence_hash', 'N/A')}", body_style))
+    story.append(Spacer(1, 12))
+    
+    # Risk Assessment
+    risk = analysis.get("risk", {})
+    score = risk.get("score", 0)
+    classification = risk.get("classification", "UNKNOWN")
+    story.append(Paragraph("RISK ASSESSMENT", heading_style))
+    story.append(Paragraph(f"<b>Score:</b> {score}/100", body_style))
+    story.append(Paragraph(f"<b>Classification:</b> {classification}", body_style))
+    story.append(Paragraph(f"<b>Scoring Method:</b> {risk.get('scoring_type', 'N/A')}", body_style))
+    story.append(Spacer(1, 6))
+    
+    # ML Signals
+    ml_signals = risk.get("ml_signals", {})
+    if ml_signals:
+        story.append(Paragraph("AI/ML ANALYSIS", heading_style))
+        story.append(Paragraph(f"<b>Model:</b> {ml_signals.get('model_name', 'N/A')}", body_style))
+        story.append(Paragraph(f"<b>Phishing Probability:</b> {ml_signals.get('phishing_probability', 0):.1%}", body_style))
+        story.append(Paragraph(f"<b>BEC Probability:</b> {ml_signals.get('bec_probability', 0):.1%}", body_style))
+        story.append(Paragraph(f"<b>Confidence:</b> {ml_signals.get('confidence', 0):.1%}", body_style))
+        story.append(Spacer(1, 6))
+    
+    # Reasons/Signals
+    reasons = risk.get("reasons", [])
+    signals = risk.get("signals", [])
+    if reasons or signals:
+        story.append(Paragraph("TRIGGERED FORENSIC SIGNALS", heading_style))
+        all_signals = []
+        for r in reasons:
+            all_signals.append(f"• {r}")
+        for s in signals:
+            all_signals.append(f"• [{s.get('severity', '')}] {s.get('signal', '')} ({s.get('category', '')}: +{s.get('weight', 0)})")
+        
+        for sig in all_signals[:20]:  # Limit for PDF
+            story.append(Paragraph(sig, body_style))
+        if len(all_signals) > 20:
+            story.append(Paragraph(f"... and {len(all_signals) - 20} more signals", mono_style))
+        story.append(Spacer(1, 6))
+    
+    # Authentication
+    auth = analysis.get("authentication", {})
+    story.append(Paragraph("AUTHENTICATION RESULTS", heading_style))
+    auth_data = [
+        ["Protocol", "Status", "Detail"],
+        ["SPF", auth.get("spf", {}).get("status", "N/A"), auth.get("spf", {}).get("detail", "")[:80]],
+        ["DKIM", auth.get("dkim", {}).get("status", "N/A"), auth.get("dkim", {}).get("detail", "")[:80]],
+        ["DMARC", auth.get("dmarc", {}).get("status", "N/A"), auth.get("dmarc", {}).get("detail", "")[:80]],
+    ]
+    auth_table = Table(auth_data, colWidths=[1*inch, 1*inch, 4*inch])
+    auth_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), HexColor('#1a1a2e')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), HexColor('#00e5ff')),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('GRID', (0, 0), (-1, -1), 0.5, HexColor('#333333')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [HexColor('#111111'), HexColor('#1a1a2e')]),
+    ]))
+    story.append(auth_table)
+    story.append(Spacer(1, 12))
+    
+    # Email Metadata
+    email = analysis.get("email", {})
+    story.append(Paragraph("EMAIL METADATA", heading_style))
+    email_data = [
+        ["Field", "Value"],
+        ["From", email.get("from", "N/A")],
+        ["To", ", ".join(email.get("to", []))],
+        ["Subject", email.get("subject", "N/A")],
+        ["Date", email.get("date", "N/A")],
+        ["Message-ID", email.get("message_id", "N/A")],
+        ["Return-Path", email.get("return_path", "N/A")],
+        ["Reply-To", email.get("reply_to", "N/A")],
+    ]
+    email_table = Table(email_data, colWidths=[1.5*inch, 4.5*inch])
+    email_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), HexColor('#1a1a2e')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), HexColor('#00e5ff')),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('GRID', (0, 0), (-1, -1), 0.5, HexColor('#333333')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [HexColor('#111111'), HexColor('#1a1a2e')]),
+    ]))
+    story.append(email_table)
+    story.append(Spacer(1, 12))
+    
+    # IOCs
+    iocs = analysis.get("iocs", {})
+    story.append(Paragraph("INDICATORS OF COMPROMISE", heading_style))
+    if iocs.get("urls"):
+        story.append(Paragraph("<b>URLs:</b>", subheading_style))
+        for url in iocs["urls"][:10]:
+            story.append(Paragraph(f"• {url}", mono_style))
+    if iocs.get("domains"):
+        story.append(Paragraph("<b>Domains:</b>", subheading_style))
+        for domain in iocs["domains"][:10]:
+            story.append(Paragraph(f"• {domain}", mono_style))
+    if iocs.get("ip_addresses"):
+        story.append(Paragraph("<b>IP Addresses:</b>", subheading_style))
+        for ip in iocs["ip_addresses"][:10]:
+            story.append(Paragraph(f"• {ip}", mono_style))
+    if iocs.get("email_addresses"):
+        story.append(Paragraph("<b>Email Addresses:</b>", subheading_style))
+        for addr in iocs["email_addresses"][:10]:
+            story.append(Paragraph(f"• {addr}", mono_style))
+    story.append(Spacer(1, 12))
+    
+    # Narrative
+    narrative = analysis.get("metadata", {}).get("narrative") or "Narrative not generated."
+    story.append(Paragraph("NARRATIVE SUMMARY", heading_style))
+    story.append(Paragraph(narrative, body_style))
+    story.append(Spacer(1, 12))
+    
+    # Evidence & Blockchain
+    story.append(Paragraph("EVIDENCE & CHAIN OF CUSTODY", heading_style))
+    if evidence:
+        story.append(Paragraph(f"<b>Evidence ID:</b> {evidence.evidence_id}", body_style))
+        story.append(Paragraph(f"<b>SHA-256:</b> {evidence.sha256}", mono_style))
+        story.append(Paragraph(f"<b>Collected:</b> {evidence.collected_at}", body_style))
+        story.append(Paragraph(f"<b>Storage:</b> {evidence.storage_reference}", body_style))
+    story.append(Paragraph(f"<b>On-Chain Status:</b> {meta.get('on_chain_status', 'pending')}", body_style))
+    if meta.get("blockchain_tx_hash"):
+        story.append(Paragraph(f"<b>Transaction:</b> {meta.get('blockchain_tx_hash')}", mono_style))
+    
+    doc.build(story)
+    buffer.seek(0)
+    return buffer.read()

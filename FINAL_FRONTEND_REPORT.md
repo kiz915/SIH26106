@@ -53,4 +53,4 @@ The ThreatLens (SIH26106) frontend dashboard integration is now complete with al
 - The Next.js application builds successfully.
 
 ### Git Information
-- *Commit hash will be available upon final commit.*
+- **Commit Hash:** `eb7b391` (Frontend complete: wiring, report dashboard, map, cases, blockchain tamper demo)

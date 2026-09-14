@@ -48,17 +48,17 @@ def test_service_process_and_store_email(isolated_service):
     expected_hash = calculate_sha256(raw_bytes)
     result = isolated_service.process_and_store_email(raw_bytes, "suspicious_email.eml")
 
-    # 1. Verify returned analysis response
-    assert result.case_id.startswith("CASE-")
-    assert result.risk.score >= 70
+    # 1. Verify returned analysis response (now a dict)
+    assert result["case_id"].startswith("CASE-")
+    assert result["risk"]["score"] >= 70
 
     # 2. Verify stored case detail
-    case_detail = isolated_service.get_case_detail(result.case_id)
+    case_detail = isolated_service.get_case_detail(result["case_id"])
     assert case_detail is not None
-    assert case_detail.case.case_id == result.case_id
+    assert case_detail.case.case_id == result["case_id"]
     assert case_detail.case.original_filename == "suspicious_email.eml"
     assert case_detail.case.status == "ANALYZED"
-    assert case_detail.case.risk_score == result.risk.score
+    assert case_detail.case.risk_score == result["risk"]["score"]
 
     # 3. Verify stored evidence & physical storage reference
     assert case_detail.evidence is not None
@@ -78,7 +78,7 @@ def test_service_process_and_store_email(isolated_service):
     assert disk_bytes == raw_bytes
 
     # 5. Verify cryptographic verification service
-    verification = isolated_service.verify_case_evidence(result.case_id)
+    verification = isolated_service.verify_case_evidence(result["case_id"])
     assert verification is not None
     assert verification["is_valid"] is True
     assert verification["calculated_sha256"] == expected_hash
@@ -86,7 +86,7 @@ def test_service_process_and_store_email(isolated_service):
     # 6. Verify tampering makes verification fail
     with open(physical_file_path, "wb") as f:
         f.write(b"Tampered content")
-    tampered_verification = isolated_service.verify_case_evidence(result.case_id)
+    tampered_verification = isolated_service.verify_case_evidence(result["case_id"])
     assert tampered_verification["is_valid"] is False
 
 

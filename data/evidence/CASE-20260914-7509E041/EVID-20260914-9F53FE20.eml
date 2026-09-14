@@ -1,0 +1,37 @@
+Received: from mail-gateway.target-corp.example (mail-gateway.target-corp.example [192.0.2.10])
+	by mx1.internal.target-corp.example (Postfix) with ESMTP id 4X9Lmn01
+	for <victim-analyst@target-corp.example>; Sun, 6 Sep 2026 15:32:10 +0000 (UTC)
+Received: from suspicious-relay.external-net.example (suspicious-relay.external-net.example [198.51.100.42])
+	by mail-gateway.target-corp.example (Postfix) with ESMTPS id 3W8Klm99
+	for <victim-analyst@target-corp.example>; Sun, 6 Sep 2026 15:32:05 +0000 (UTC)
+Received: from unknown-client (dynamic-pool.isp.example [203.0.113.88])
+	by suspicious-relay.external-net.example (Postfix) with ESMTP id 2V7Jkl88
+	for <victim-analyst@target-corp.example>; Sun, 6 Sep 2026 15:32:01 +0000 (UTC)
+Authentication-Results: mx1.internal.target-corp.example;
+	spf=fail (sender IP 198.51.100.42 is not authorized for domain legit-corp.example) smtp.mailfrom=ceo@legit-corp.example;
+	dkim=fail (bad signature) header.d=legit-corp.example;
+	dmarc=fail (p=reject dis=none) header.from=legit-corp.example
+Received-SPF: Fail (mx1.internal.target-corp.example: domain of ceo@legit-corp.example does not designate 198.51.100.42 as permitted sender) receiver=mx1.internal.target-corp.example; client-ip=198.51.100.42; envelope-from="ceo@legit-corp.example";
+From: "Executive Office" <ceo@legit-corp.example>
+To: "Finance Dept" <victim-analyst@target-corp.example>
+Reply-To: "Urgent Payment Team" <finance-processing@external-secure-portal.xyz>
+Return-Path: <bounce-handler@external-secure-portal.xyz>
+Subject: URGENT: Immediate Action Required - Confidential Wire Transfer Invoice Overdue
+Date: Sun, 6 Sep 2026 15:31:50 +0000
+Message-ID: <20260906153150.998234@suspicious-relay.external-net.example>
+MIME-Version: 1.0
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+<html>
+<body>
+<p>Dear Finance Team,</p>
+<p><strong>URGENT NOTICE: Immediate action required.</strong> Our critical vendor service is at risk of account suspended status within 24 hours to verify.</p>
+<p>Please execute the confidential wire transfer for the overdue invoice immediately to avoid failure to respond penalties.</p>
+<p>You can review and approve the payment details on our secure portal here: <a href="http://198.51.100.42/portal/login?id=9928">http://198.51.100.42/portal/login?id=9928</a> or verify the transaction record at <a href="https://secure-invoice-verification.xyz/payment/auth.php">https://secure-invoice-verification.xyz/payment/auth.php</a>.</p>
+<p>Direct deposit details and bank transfer credentials must remain strictly confidential.</p>
+<p>Regards,<br>
+Executive Office<br>
+Legit Corp International</p>
+</body>
+</html>

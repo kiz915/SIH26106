@@ -7,7 +7,7 @@ risk assessment, IP geolocation intelligence, and domain DNS intelligence.
 import time
 import uuid
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from backend.models import (
     EmailAnalysisResponse,
@@ -23,8 +23,9 @@ from backend.ioc_extractor import extract_iocs
 from backend.risk_engine import calculate_risk
 from backend.ip_intelligence import IPIntelligenceService
 from backend.domain_intelligence import DomainIntelligenceService
+from backend.ml_bridge import analyze_with_ml
 
-PARSER_VERSION = "1.0.0-prototype"
+PARSER_VERSION = "1.0.0-ml-integrated"
 
 # Shared intelligence services with in-memory caching
 ip_intel_service = IPIntelligenceService()
@@ -44,7 +45,7 @@ def analyze_email_bytes(
     case_id: Optional[str] = None
 ) -> EmailAnalysisResponse:
     """
-    Main analysis pipeline function.
+    Main analysis pipeline function (legacy - returns backend Pydantic model).
     Safely parses raw email bytes and generates a forensic analysis report with IP and domain intelligence.
     """
     if not raw_bytes or len(raw_bytes.strip()) == 0:
@@ -74,7 +75,7 @@ def analyze_email_bytes(
 
     iocs = extract_iocs(plain_body, html_body, header_emails)
 
-    # 4. Calculate Risk
+    # 4. Calculate Risk (deterministic backend engine)
     risk = calculate_risk(
         email_meta=email_meta,
         auth=auth_results,
@@ -123,3 +124,102 @@ def analyze_email_bytes(
         domain_intelligence=domain_intel_json,
         metadata=metadata
     )
+
+
+def analyze_email_bytes_frontend(
+    raw_bytes: bytes,
+    file_name: Optional[str] = "uploaded_email.eml",
+    case_id: Optional[str] = None,
+    evidence_id: Optional[str] = None,
+    evidence_hash: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Main analysis pipeline function - returns FRONTEND-SHAPED JSON dict.
+    This is the primary entry point for the integrated pipeline.
+    """
+    if not raw_bytes or len(raw_bytes.strip()) == 0:
+        raise ValueError("Cannot analyze empty email content.")
+
+    start_time = time.perf_counter()
+    active_case_id = case_id or generate_case_id()
+    analysis_ts = datetime.now(timezone.utc).isoformat()
+    file_size = len(raw_bytes)
+
+    # 1. Parse Headers & Body
+    email_meta, auth_results, plain_body, html_body, msg_obj = parse_email_headers(raw_bytes)
+
+    # 2. Parse Relay Path
+    relay_hops = parse_relay_path(msg_obj)
+
+    # 3. Extract IOCs
+    header_emails = []
+    if email_meta.from_address:
+        header_emails.append(email_meta.from_address)
+    if email_meta.reply_to:
+        header_emails.append(email_meta.reply_to)
+    if email_meta.return_path:
+        header_emails.append(email_meta.return_path)
+    header_emails.extend(email_meta.to)
+    header_emails.extend(email_meta.cc)
+
+    iocs = extract_iocs(plain_body, html_body, header_emails)
+
+    # 4. Calculate Risk (deterministic backend engine - used as fallback)
+    risk = calculate_risk(
+        email_meta=email_meta,
+        auth=auth_results,
+        iocs=iocs,
+        relay_hops=relay_hops,
+        plain_body=plain_body
+    )
+
+    # 5. IP Intelligence & Network Geolocation Enrichment
+    all_ips = list(iocs.ips)
+    for hop in relay_hops:
+        if hop.ip and hop.ip not in all_ips:
+            all_ips.append(hop.ip)
+
+    try:
+        ip_intel_records = ip_intel_service.lookup_ips(all_ips)
+        ip_intel_json = [r.model_dump(by_alias=True) for r in ip_intel_records]
+    except Exception:
+        ip_intel_json = []
+
+    # 6. Domain Intelligence & DNS Resolution Enrichment
+    try:
+        domain_intel_records = domain_intel_service.lookup_domains(iocs.domains)
+        domain_intel_json = [d.model_dump(by_alias=True) for d in domain_intel_records]
+    except Exception:
+        domain_intel_json = []
+
+    elapsed_ms = round((time.perf_counter() - start_time) * 1000, 2)
+
+    # Generate evidence_id if not provided
+    if evidence_id is None:
+        evidence_id = f"EVID-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{uuid.uuid4().hex[:8].upper()}"
+    
+    # Generate evidence_hash if not provided (will be overridden by caller with actual hash)
+    if evidence_hash is None:
+        from backend.repositories import calculate_sha256
+        evidence_hash = calculate_sha256(raw_bytes)
+
+    # 7. ML Bridge Analysis (returns frontend-shaped dict)
+    frontend_result = analyze_with_ml(
+        email_meta=email_meta,
+        auth_results=auth_results,
+        plain_body=plain_body,
+        html_body=html_body,
+        relay_hops=relay_hops,
+        iocs=iocs,
+        ip_intelligence=ip_intel_json,
+        domain_intelligence=domain_intel_json,
+        case_id=active_case_id,
+        evidence_id=evidence_id,
+        evidence_hash=evidence_hash,
+        file_name=file_name,
+        file_size=file_size,
+        execution_time_ms=elapsed_ms,
+        msg_obj=msg_obj,
+    )
+    
+    return frontend_result

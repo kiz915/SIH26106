@@ -5,10 +5,10 @@ Coordinates hashing, physical disk evidence preservation, analysis orchestration
 
 import json
 import uuid
+import logging
 from datetime import datetime, timezone
 from typing import Optional, List, Tuple, Dict, Any
 
-from backend.models import EmailAnalysisResponse
 from backend.db_models import (
     CaseRecord,
     EvidenceRecord,
@@ -27,7 +27,10 @@ from backend.evidence_storage import (
     read_evidence,
     verify_evidence_file,
 )
-from backend.analyzer import analyze_email_bytes, generate_case_id
+from backend.analyzer import analyze_email_bytes_frontend, generate_case_id
+from backend.blockchain_service import get_blockchain_service
+
+logger = logging.getLogger("backend.case_service")
 
 
 class CaseService:
@@ -44,15 +47,16 @@ class CaseService:
         self,
         raw_bytes: bytes,
         filename: str,
-    ) -> EmailAnalysisResponse:
+    ) -> Dict[str, Any]:
         """
         Executes end-to-end analysis on raw email bytes and atomically persists:
         1. Exact physical .eml evidence file under data/evidence/<case_id>/<evidence_id>.eml
         2. Exact SHA-256 evidence record with storage_reference
         3. Case management record
-        4. Full serialized forensic analysis report
+        4. Full serialized forensic analysis report (frontend-shaped JSON)
+        5. Register evidence hash on blockchain (graceful degradation if unavailable)
         
-        Returns the EmailAnalysisResponse for client consumers.
+        Returns the frontend-shaped analysis dict for client consumers.
         """
         # 1. Cryptographic hashing of exact raw bytes
         sha256_hash = calculate_sha256(raw_bytes)
@@ -71,14 +75,48 @@ class CaseService:
             base_dir=self.evidence_dir
         )
 
-        # 4. Execute forensic analysis
-        analysis_result = analyze_email_bytes(
+        # 4. Execute forensic analysis (returns frontend-shaped dict)
+        analysis_result = analyze_email_bytes_frontend(
             raw_bytes=raw_bytes,
             file_name=filename,
-            case_id=case_id
+            case_id=case_id,
+            evidence_id=evidence_id,
+            evidence_hash=sha256_hash,
         )
 
-        # 5. Create database records
+        # 5. Register evidence on blockchain (graceful degradation)
+        on_chain_status = "pending"
+        blockchain_tx_hash = None
+        blockchain_block_number = None
+        
+        try:
+            blockchain_service = get_blockchain_service()
+            if blockchain_service and blockchain_service.is_available():
+                # Use evidence_id as the blockchain evidence identifier
+                stage = "FORENSIC_ANALYSIS"
+                result = blockchain_service.register_evidence(
+                    evidence_id=evidence_id,
+                    sha256_hash=sha256_hash,
+                    stage=stage
+                )
+                on_chain_status = "confirmed" if result.get("success") else "failed"
+                blockchain_tx_hash = result.get("transaction_hash")
+                blockchain_block_number = result.get("block_number")
+                logger.info(f"Registered evidence {evidence_id} on blockchain: {blockchain_tx_hash}")
+            else:
+                logger.info("Blockchain service not available, evidence hash not registered on-chain")
+        except Exception as exc:
+            logger.warning(f"Blockchain registration failed for {evidence_id} (continuing): {exc}")
+            on_chain_status = "error"
+
+        # Add blockchain info to analysis result metadata
+        analysis_result["metadata"]["on_chain_status"] = on_chain_status
+        if blockchain_tx_hash:
+            analysis_result["metadata"]["blockchain_tx_hash"] = blockchain_tx_hash
+        if blockchain_block_number:
+            analysis_result["metadata"]["blockchain_block_number"] = blockchain_block_number
+
+        # 6. Create database records
         case_record = CaseRecord(
             case_id=case_id,
             created_at=now_ts,
@@ -86,8 +124,8 @@ class CaseService:
             original_filename=filename,
             file_size=file_size,
             status="ANALYZED",
-            risk_score=analysis_result.risk.score,
-            classification=analysis_result.risk.classification.value,
+            risk_score=analysis_result["risk"]["score"],
+            classification=analysis_result["risk"]["classification"],
         )
 
         evidence_record = EvidenceRecord(
@@ -100,14 +138,16 @@ class CaseService:
             storage_reference=storage_reference,
         )
 
+        # Store frontend-shaped analysis JSON
+        analysis_json = json.dumps(analysis_result)
         analysis_record = AnalysisRecord(
             case_id=case_id,
-            analysis_json=analysis_result.model_dump_json(by_alias=True),
-            analysis_timestamp=analysis_result.metadata.analysis_timestamp,
-            parser_version=analysis_result.metadata.parser_version,
+            analysis_json=analysis_json,
+            analysis_timestamp=analysis_result["metadata"]["analysis_timestamp"],
+            parser_version=analysis_result["metadata"]["parser_version"],
         )
 
-        # 6. Persist to SQLite
+        # 7. Persist to SQLite
         self.case_repo.create_case(case_record)
         self.evidence_repo.create_evidence(evidence_record)
         self.analysis_repo.save_analysis(analysis_record)
