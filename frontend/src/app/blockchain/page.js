@@ -25,6 +25,7 @@ import { deriveBlockchainRecord, verifyHashIntegrity } from '@/lib/blockchain';
 import { listCases, getCaseEvidence } from '@/lib/api';
 import { getHistory } from '@/lib/storage';
 import { BLOCKCHAIN_NETWORK } from '@/lib/constants';
+import toast from 'react-hot-toast';
 
 function BlockchainExplorerContent() {
   const searchParams = useSearchParams();
@@ -127,6 +128,19 @@ function BlockchainExplorerContent() {
     if (!record) return;
     const isMatch = verifyHashIntegrity(verificationInput, record.payloadSha256);
     setVerifyResult(isMatch);
+    if (isMatch) {
+      toast.success('Integrity verified: Hash matches ledger record');
+    } else {
+      toast.error('Integrity violation: Hash does not match ledger record');
+    }
+  };
+
+  const handleSimulateTampering = () => {
+    if (!record) return;
+    const tampered = record.payloadSha256.substring(0, 60) + 'dead';
+    setVerificationInput(tampered);
+    setVerifyResult(false);
+    toast.error('Simulated Tampering: Payload hash altered');
   };
 
   const handlePrintCert = () => {
@@ -345,12 +359,20 @@ function BlockchainExplorerContent() {
               className="cyber-input p-3"
             />
 
-            <button
-              onClick={handleVerifyHash}
-              className="mt-3 w-full py-2.5 rounded-xl btn-cyber-primary shadow-sm text-xs"
-            >
-              Verify Cryptographic Match
-            </button>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={handleVerifyHash}
+                className="flex-1 py-2.5 rounded-xl btn-cyber-primary shadow-sm text-xs"
+              >
+                Verify Cryptographic Match
+              </button>
+              <button
+                onClick={handleSimulateTampering}
+                className="flex-1 py-2.5 rounded-xl btn-cyber-destructive shadow-sm text-xs"
+              >
+                Simulate Tampering
+              </button>
+            </div>
 
             {verifyResult !== null && (
               <div

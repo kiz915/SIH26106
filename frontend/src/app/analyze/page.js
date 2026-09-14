@@ -42,6 +42,7 @@ import {
 import { analyzeEmail, listCases } from '@/lib/api';
 import { saveAnalysis } from '@/lib/storage';
 import { MAX_FILE_SIZE_MB, MAX_FILE_SIZE_BYTES } from '@/lib/constants';
+import toast from 'react-hot-toast';
 
 const STAGES = [
   { id: 1, name: 'Email Headers', subtitle: 'MIME & Envelope Structure', icon: FileUp, tag: 'HEADERS' },
@@ -278,12 +279,15 @@ export default function AnalyzePage() {
     ]);
 
     try {
+      toast.loading('Initiating forensic analysis pipeline...', { id: 'analyze' });
       const result = await analyzeEmail(targetFile);
       saveAnalysis(result);
       setAnalysisResult(result);
       setCurrentStep(1);
+      toast.success(`Analysis complete — Case ${result.case_id || 'created'}`, { id: 'analyze' });
     } catch (err) {
       setError(err.message || 'Forensic analysis failed. Verify FastAPI backend is online on port 8000.');
+      toast.error(err.message || 'Analysis pipeline failed', { id: 'analyze' });
     } finally {
       setLoading(false);
     }

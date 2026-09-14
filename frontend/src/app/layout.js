@@ -4,6 +4,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import InteractiveBackground from '@/components/common/InteractiveBackground';
 import { ThemeProvider } from '@/context/ThemeContext';
+import ToastProvider from '@/components/common/ToastProvider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -30,6 +31,7 @@ export default function RootLayout({ children }) {
         <ThemeProvider>
           {/* Interactive Dynamic Background with Animated Constellation Canvas */}
           <InteractiveBackground />
+          <ToastProvider />
 
           <div className="relative z-10 flex flex-col min-h-screen">
             <Navbar />

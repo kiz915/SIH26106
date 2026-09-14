@@ -26,6 +26,8 @@ import {
 import { listCases } from '@/lib/api';
 import { getHistory, clearHistory } from '@/lib/storage';
 import { RISK_TIERS } from '@/lib/constants';
+import { SkeletonCard } from '@/components/common/Skeleton';
+import toast from 'react-hot-toast';
 
 export default function CasesPage() {
   const [cases, setCases] = useState([]);
@@ -68,6 +70,7 @@ export default function CasesPage() {
   const handleClearLocal = () => {
     if (confirm('Purge local browser case records? (Server SQLite records remain intact)')) {
       clearHistory();
+      toast.success('Local cache purged');
       fetchCaseList();
     }
   };
@@ -244,7 +247,13 @@ export default function CasesPage() {
       </div>
 
       {/* Case List */}
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="glass-card p-12 text-center">
           <FileSearch className="w-12 h-12 mx-auto text-[var(--text-muted)] mb-3 opacity-50" />
           <p className="text-sm font-bold text-[var(--text-primary)] mb-1">
