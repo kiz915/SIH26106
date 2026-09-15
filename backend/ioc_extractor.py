@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 from typing import List, Set, Tuple
 from email.utils import parseaddr
 
-from backend.models import IOCs
+from models import IOCs
 
 
 # Regular expressions for candidate extraction

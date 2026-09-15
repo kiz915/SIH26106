@@ -9,7 +9,7 @@ from email.utils import parseaddr
 import re
 import ipaddress
 
-from backend.models import (
+from models import (
     EmailMetadata,
     AuthResults,
     AuthStatus,

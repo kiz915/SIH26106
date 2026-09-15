@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 
-from backend.models import (
+from models import (
     EmailAnalysisResponse,
     AnalysisMetadata,
     EmailMetadata,
@@ -17,13 +17,13 @@ from backend.models import (
     IOCs,
     RiskAssessment
 )
-from backend.header_parser import parse_email_headers
-from backend.relay_parser import parse_relay_path
-from backend.ioc_extractor import extract_iocs
-from backend.risk_engine import calculate_risk
-from backend.ip_intelligence import IPIntelligenceService
-from backend.domain_intelligence import DomainIntelligenceService
-from backend.ml_bridge import analyze_with_ml
+from header_parser import parse_email_headers
+from relay_parser import parse_relay_path
+from ioc_extractor import extract_iocs
+from risk_engine import calculate_risk
+from ip_intelligence import IPIntelligenceService
+from domain_intelligence import DomainIntelligenceService
+from ml_bridge import analyze_with_ml
 
 PARSER_VERSION = "1.0.0-ml-integrated"
 
@@ -200,7 +200,7 @@ def analyze_email_bytes_frontend(
     
     # Generate evidence_hash if not provided (will be overridden by caller with actual hash)
     if evidence_hash is None:
-        from backend.repositories import calculate_sha256
+        from repositories import calculate_sha256
         evidence_hash = calculate_sha256(raw_bytes)
 
     # 7. ML Bridge Analysis (returns frontend-shaped dict)

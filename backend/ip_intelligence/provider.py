@@ -8,7 +8,7 @@ import os
 import httpx
 import logging
 from typing import Optional
-from backend.ip_intelligence.models import IPIntelligenceResult
+from ip_intelligence.models import IPIntelligenceResult
 
 logger = logging.getLogger("backend.ip_intelligence")
 
@@ -105,7 +105,7 @@ def get_ip_provider(provider_name: Optional[str] = None) -> BaseIPProvider:
     selected = (provider_name or os.environ.get("IP_INTELLIGENCE_PROVIDER", "real")).lower().strip()
 
     if selected == "mock":
-        from backend.ip_intelligence.mock_provider import MockIPIntelligenceProvider
+        from ip_intelligence.mock_provider import MockIPIntelligenceProvider
         return MockIPIntelligenceProvider()
     elif selected == "real":
         return IpApiProvider()

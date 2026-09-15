@@ -10,7 +10,7 @@ from email.utils import parseaddr, getaddresses
 from typing import Tuple, List, Dict, Any, Optional
 import re
 
-from backend.models import EmailMetadata, AuthResults, AuthStatus
+from models import EmailMetadata, AuthResults, AuthStatus
 
 
 def decode_mime_header(header_value: Optional[str]) -> Optional[str]:

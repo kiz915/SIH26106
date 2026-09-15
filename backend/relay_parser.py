@@ -11,7 +11,7 @@ from email.utils import parsedate_to_datetime
 from datetime import datetime
 from typing import List, Optional, Tuple
 
-from backend.models import RelayHop
+from models import RelayHop
 
 
 # Regex patterns for parsing components of Received headers

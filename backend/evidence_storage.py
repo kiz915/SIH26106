@@ -7,7 +7,7 @@ import os
 import re
 from typing import Optional, Dict, Any
 
-from backend.repositories import calculate_sha256
+from repositories import calculate_sha256
 
 # Root evidence directory: data/evidence/
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

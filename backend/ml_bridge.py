@@ -485,7 +485,7 @@ def analyze_with_ml(
     if analyzer is None:
         # ML unavailable - use fallback
         logger.info("Using rules fallback (ML engine not loaded)")
-        from backend.risk_engine import calculate_risk
+        from risk_engine import calculate_risk
         backend_risk = calculate_risk(
             email_meta=email_meta,
             auth=auth_results,
@@ -542,7 +542,7 @@ def analyze_with_ml(
         )
     except Exception as exc:
         logger.error(f"ML analysis failed, falling back to rules: {exc}", exc_info=True)
-        from backend.risk_engine import calculate_risk
+        from risk_engine import calculate_risk
         backend_risk = calculate_risk(
             email_meta=email_meta,
             auth=auth_results,

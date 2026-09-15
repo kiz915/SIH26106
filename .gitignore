@@ -22,6 +22,7 @@ htmlcov/
 .env
 .env.local
 .env.*.local
+**/.env*
 !.env.example
 !**/.env.example
 
@@ -37,6 +38,8 @@ coverage.json
 *.pt
 *.safetensors
 *.mmdb
+AI_ML/models/
+AI_ML/runs/
 AI_ML/data/raw/
 AI_ML/data/processed/*.jsonl
 AI_ML/data/synthetic/*.jsonl
@@ -48,6 +51,9 @@ transformers_cache/
 *.sqlite3
 backend/cache/
 data/evidence/
+*.log
+*.tmp
+*.bak
 
 # --- OS / Editor ---
 .DS_Store

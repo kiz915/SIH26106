@@ -12,12 +12,13 @@ import logging
 import json
 from typing import Optional, Dict, Any
 
-from backend.models import HealthResponse
-from backend.db_models import CaseListResponse, CaseDetailResponse, EvidenceRecord, AnalysisRecord
-from backend.analyzer import PARSER_VERSION
-from backend.database import init_db
-from backend.case_service import CaseService
-from backend.blockchain_service import get_blockchain_service
+from models import HealthResponse
+from db_models import CaseListResponse, CaseDetailResponse, EvidenceRecord, AnalysisRecord
+from analyzer import PARSER_VERSION
+from database import init_db
+from case_service import CaseService
+from blockchain_service import get_blockchain_service
+from services.llm_narrative import generate_narrative, check_ollama_health
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -245,14 +246,21 @@ async def get_case_report(case_id: str):
     evidence = case_detail.evidence
     
     # Check if narrative already stored
-    narrative = analysis.get("metadata", {}).get("narrative")
+    narrative_data = analysis.get("metadata", {}).get("narrative")
     
-    if not narrative:
-        # Generate narrative
-        narrative = await generate_narrative(analysis)
+    if not narrative_data:
+        # Generate narrative using the new service
+        narrative_result = await generate_narrative(analysis, case_id)
+        narrative = narrative_result.get("narrative", "")
+        
         # Store narrative in metadata
         if "metadata" in analysis:
             analysis["metadata"]["narrative"] = narrative
+            analysis["metadata"]["narrative_metadata"] = {
+                "generation_method": narrative_result.get("generation_method"),
+                "model": narrative_result.get("model"),
+                "generated_at": narrative_result.get("timestamp")
+            }
             # Update DB
             try:
                 case_service.analysis_repo.save_analysis(
@@ -265,6 +273,8 @@ async def get_case_report(case_id: str):
                 )
             except Exception as exc:
                 logger.warning(f"Failed to persist narrative: {exc}")
+    else:
+        narrative = narrative_data
     
     return {
         "case_id": case_id,
@@ -321,6 +331,14 @@ async def get_case_report_pdf(case_id: str):
 
 
 # ============ BLOCKCHAIN ENDPOINTS ============
+
+# ============ LLM SERVICE ENDPOINTS ============
+
+@app.get("/llm/health", tags=["LLM"], summary="Check Ollama service health")
+async def get_llm_health():
+    """Returns Ollama connectivity and model availability status."""
+    return await check_ollama_health()
+
 
 @app.get("/blockchain/status", tags=["Blockchain"], summary="Get blockchain service status")
 async def get_blockchain_status():
@@ -469,90 +487,9 @@ async def get_blockchain_evidence(evidence_id: str):
 
 
 # ============ REPORT GENERATION HELPERS ============
-
-async def generate_narrative(analysis: Dict[str, Any]) -> str:
-    """
-    Generate narrative summary for the forensic report.
-    Tries Ollama llama3.2:3b first, falls back to deterministic template.
-    """
-    risk = analysis.get("risk", {})
-    score = risk.get("score", 0)
-    classification = risk.get("classification", "UNKNOWN")
-    reasons = risk.get("reasons", [])
-    ml_signals = risk.get("ml_signals", {})
-    
-    email = analysis.get("email", {})
-    subject = email.get("subject", "No Subject")
-    from_addr = email.get("from_address", "Unknown")
-    
-    # Top 3 reasons
-    top_reasons = reasons[:3] if reasons else ["No specific forensic signals detected."]
-    
-    # Try Ollama
-    try:
-        import httpx
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.post(
-                "http://localhost:11434/api/generate",
-                json={
-                    "model": "llama3.2:3b",
-                    "prompt": f"""Write a concise forensic narrative (150-220 words) for an email threat analysis report.
-
-Case Details:
-- Threat Type: {classification}
-- Risk Score: {score}/100
-- Subject: {subject}
-- Sender: {from_addr}
-- Phishing Probability: {ml_signals.get('phishing_probability', 'N/A')}
-- BEC Probability: {ml_signals.get('bec_probability', 'N/A')}
-- Model: {ml_signals.get('model_name', 'ThreatLens-DistilBERT-v1')}
-- Confidence: {ml_signals.get('confidence', 'N/A')}
-
-Key Evidence:
-{chr(10).join(f'- {r}' for r in top_reasons)}
-
-Required narrative elements:
-1. Threat type assessment
-2. Key evidence summary
-3. Origin assessment with confidence
-4. Recommended action
-
-Write in professional forensic tone.""",
-                    "stream": False,
-                    "options": {"temperature": 0.2}
-                }
-            )
-            if response.status_code == 200:
-                result = response.json()
-                narrative = result.get("response", "").strip()
-                if len(narrative) >= 100:
-                    return narrative
-    except Exception as exc:
-        logger.info(f"Ollama unavailable, using template narrative: {exc}")
-    
-    # Deterministic fallback template
-    threat_type = "Business Email Compromise" if "CRITICAL" in classification or "HIGH" in classification else \
-                  "Phishing" if "PHISHING" in str(ml_signals.get("classification", {})).upper() else \
-                  "Suspicious Email"
-    
-    origin_confidence = "HIGH" if ml_signals.get("confidence", 0) > 0.7 else "MEDIUM" if ml_signals.get("confidence", 0) > 0.4 else "LOW"
-    
-    action = "Immediate quarantine and incident response initiation recommended." if "CRITICAL" in classification else \
-             "Block sender domain and escalate to SOC for review." if "HIGH" in classification else \
-             "Monitor and apply enhanced filtering rules."
-    
-    narrative = (
-        f"Threat Assessment: {threat_type} ({classification}). "
-        f"Forensic analysis of email from {from_addr} with subject '{subject}' yielded a risk score of {score}/100. "
-        f"Primary indicators include: {'; '.join(top_reasons)}. "
-        f"ML engine ({ml_signals.get('model_name', 'ThreatLens-DistilBERT-v1')}) assessed "
-        f"phishing probability at {ml_signals.get('phishing_probability', 0):.0%} and "
-        f"BEC probability at {ml_signals.get('bec_probability', 0):.0%} with {origin_confidence} confidence. "
-        f"Origin infrastructure analysis suggests {origin_confidence.lower()} confidence attribution. "
-        f"{action}"
-    )
-    
-    return narrative
+# Now imported from backend.services.llm_narrative
+# async def generate_narrative(...) -> Dict[str, Any]:
+#     ...
 
 
 def generate_pdf_report(case_id: str, analysis: Dict[str, Any], evidence: Optional[EvidenceRecord]) -> bytes:
