@@ -9,7 +9,8 @@ from email.utils import parseaddr
 import re
 import ipaddress
 
-from models import (
+try:
+    from .models import (
     EmailMetadata,
     AuthResults,
     AuthStatus,
@@ -20,7 +21,20 @@ from models import (
     RiskSignal,
     MLIntelligence,
     IPIntelligence
-)
+    )
+except ImportError:
+    from models import (
+        EmailMetadata,
+        AuthResults,
+        AuthStatus,
+        IOCs,
+        RelayHop,
+        RiskAssessment,
+        RiskClassification,
+        RiskSignal,
+        MLIntelligence,
+        IPIntelligence
+    )
 
 
 # Threat keywords with assigned categories and weights
@@ -259,7 +273,7 @@ def get_default_ip_intelligence() -> IPIntelligence:
         is_hosting=None,
         is_vpn_tor=None,
         disclaimer="IP geolocation reflects network infrastructure routing, not physical attacker identity."
-    )
+        )
 
 
 def calculate_risk(

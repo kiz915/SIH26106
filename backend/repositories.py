@@ -8,12 +8,17 @@ import hashlib
 import json
 from typing import List, Optional, Tuple, Any
 from datetime import datetime
+from contextlib import contextmanager
 
 from sqlalchemy import text, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import get_db_session, init_db, init_db_sync
-from db_models import CaseRecord, EvidenceRecord, AnalysisRecord
+try:
+    from .database import get_db_session, init_db, init_db_sync
+    from .db_models import CaseRecord, EvidenceRecord, AnalysisRecord
+except ImportError:
+    from database import get_db_session, init_db, init_db_sync
+    from db_models import CaseRecord, EvidenceRecord, AnalysisRecord
 
 
 def calculate_sha256(data: bytes) -> str:
@@ -375,3 +380,129 @@ class SyncAnalysisRepository:
     async def _async_get(self, case_id: str):
         async with get_db_session() as s:
             return await AnalysisRepository()._get_analysis_impl(case_id, s)
+
+
+class _SQLiteCaseRepository:
+    def __init__(self, db_path: Optional[str] = None):
+        self.db_path = db_path
+
+    def create_case(self, case: CaseRecord) -> CaseRecord:
+        init_db_sync(self.db_path)
+        with _db_connection(self.db_path) as conn:
+            conn.execute(
+                """INSERT INTO cases
+                (case_id, created_at, updated_at, original_filename, file_size, status, risk_score, classification)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                (case.case_id, case.created_at, case.updated_at, case.original_filename,
+                 case.file_size, case.status, case.risk_score, case.classification),
+            )
+        return case
+
+    def get_case(self, case_id: str) -> Optional[CaseRecord]:
+        init_db_sync(self.db_path)
+        with _db_connection(self.db_path) as conn:
+            row = conn.execute("SELECT * FROM cases WHERE case_id = ?", (case_id,)).fetchone()
+        return _case_from_row(row) if row else None
+
+    def list_cases(self, limit: int = 50, offset: int = 0) -> Tuple[List[CaseRecord], int]:
+        init_db_sync(self.db_path)
+        with _db_connection(self.db_path) as conn:
+            total = conn.execute("SELECT COUNT(*) FROM cases").fetchone()[0]
+            rows = conn.execute(
+                "SELECT * FROM cases ORDER BY created_at DESC LIMIT ? OFFSET ?", (limit, offset)
+            ).fetchall()
+        return [_case_from_row(row) for row in rows], total
+
+
+class _SQLiteEvidenceRepository:
+    def __init__(self, db_path: Optional[str] = None):
+        self.db_path = db_path
+
+    def create_evidence(self, evidence: EvidenceRecord) -> EvidenceRecord:
+        init_db_sync(self.db_path)
+        with _db_connection(self.db_path) as conn:
+            conn.execute(
+                """INSERT INTO evidence
+                (evidence_id, case_id, sha256, original_filename, file_size, collected_at, storage_reference)
+                VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (evidence.evidence_id, evidence.case_id, evidence.sha256, evidence.original_filename,
+                 evidence.file_size, evidence.collected_at, evidence.storage_reference),
+            )
+        return evidence
+
+    def get_evidence_by_case(self, case_id: str) -> Optional[EvidenceRecord]:
+        return self._get("SELECT * FROM evidence WHERE case_id = ?", (case_id,))
+
+    def get_evidence(self, evidence_id: str) -> Optional[EvidenceRecord]:
+        return self._get("SELECT * FROM evidence WHERE evidence_id = ?", (evidence_id,))
+
+    def _get(self, query: str, params: tuple) -> Optional[EvidenceRecord]:
+        init_db_sync(self.db_path)
+        with _db_connection(self.db_path) as conn:
+            row = conn.execute(query, params).fetchone()
+        return _evidence_from_row(row) if row else None
+
+
+class _SQLiteAnalysisRepository:
+    def __init__(self, db_path: Optional[str] = None):
+        self.db_path = db_path
+
+    def save_analysis(self, analysis: AnalysisRecord) -> AnalysisRecord:
+        init_db_sync(self.db_path)
+        payload = analysis.analysis_json
+        if isinstance(payload, dict):
+            payload = json.dumps(payload)
+        with _db_connection(self.db_path) as conn:
+            conn.execute(
+                """INSERT OR REPLACE INTO analysis
+                (case_id, analysis_json, analysis_timestamp, parser_version)
+                VALUES (?, ?, ?, ?)""",
+                (analysis.case_id, payload, analysis.analysis_timestamp, analysis.parser_version),
+            )
+        return analysis
+
+    def get_analysis(self, case_id: str) -> Optional[AnalysisRecord]:
+        init_db_sync(self.db_path)
+        with _db_connection(self.db_path) as conn:
+            row = conn.execute("SELECT * FROM analysis WHERE case_id = ?", (case_id,)).fetchone()
+        if not row:
+            return None
+        return AnalysisRecord(
+            case_id=row["case_id"], analysis_json=row["analysis_json"],
+            analysis_timestamp=row["analysis_timestamp"], parser_version=row["parser_version"],
+        )
+
+
+@contextmanager
+def _db_connection(db_path: Optional[str] = None):
+    conn = get_db_connection(db_path)
+    try:
+        yield conn
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def _case_from_row(row) -> CaseRecord:
+    return CaseRecord(
+        case_id=row["case_id"], created_at=row["created_at"], updated_at=row["updated_at"],
+        original_filename=row["original_filename"], file_size=row["file_size"],
+        status=row["status"], risk_score=row["risk_score"], classification=row["classification"],
+    )
+
+
+def _evidence_from_row(row) -> EvidenceRecord:
+    return EvidenceRecord(
+        evidence_id=row["evidence_id"], case_id=row["case_id"], sha256=row["sha256"],
+        original_filename=row["original_filename"], file_size=row["file_size"],
+        collected_at=row["collected_at"], storage_reference=row["storage_reference"],
+    )
+
+
+try:
+    from .database import get_db_connection
+except ImportError:
+    from database import get_db_connection
+CaseRepository = _SQLiteCaseRepository
+EvidenceRepository = _SQLiteEvidenceRepository
+AnalysisRepository = _SQLiteAnalysisRepository

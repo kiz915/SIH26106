@@ -31,7 +31,7 @@ sys.path.insert(0, '/app')
 from backend.database import init_db
 
 async def run_migrations():
-    await init_db()
+    init_db()
     print('Migrations completed successfully!')
 
 asyncio.run(run_migrations())

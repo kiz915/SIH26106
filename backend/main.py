@@ -12,13 +12,22 @@ import logging
 import json
 from typing import Optional, Dict, Any
 
-from models import HealthResponse
-from db_models import CaseListResponse, CaseDetailResponse, EvidenceRecord, AnalysisRecord
-from analyzer import PARSER_VERSION
-from database import init_db
-from case_service import CaseService
-from blockchain_service import get_blockchain_service
-from services.llm_narrative import generate_narrative, check_ollama_health
+try:
+    from .models import HealthResponse
+    from .db_models import CaseListResponse, CaseDetailResponse, EvidenceRecord, AnalysisRecord
+    from .analyzer import PARSER_VERSION
+    from .database import init_db
+    from .case_service import CaseService
+    from .blockchain_service import get_blockchain_service
+    from .services.llm_narrative import generate_narrative, check_ollama_health
+except ImportError:
+    from models import HealthResponse
+    from db_models import CaseListResponse, CaseDetailResponse, EvidenceRecord, AnalysisRecord
+    from analyzer import PARSER_VERSION
+    from database import init_db
+    from case_service import CaseService
+    from blockchain_service import get_blockchain_service
+    from services.llm_narrative import generate_narrative, check_ollama_health
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")

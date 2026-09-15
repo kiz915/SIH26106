@@ -7,7 +7,10 @@ import os
 import re
 from typing import Optional, Dict, Any
 
-from repositories import calculate_sha256
+try:
+    from .repositories import calculate_sha256
+except ImportError:
+    from repositories import calculate_sha256
 
 # Root evidence directory: data/evidence/
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -76,8 +79,12 @@ def resolve_evidence_path(storage_reference: str, base_dir: Optional[str] = None
 
     abs_path = os.path.abspath(os.path.join(root, rel_path))
 
-    # Security check: ensure resolved path is strictly within the evidence root
-    if not abs_path.startswith(root):
+    # Security check: compare path components, not string prefixes.
+    try:
+        inside_root = os.path.commonpath([root, abs_path]) == root
+    except ValueError:
+        inside_root = False
+    if not inside_root:
         raise PermissionError(f"Access denied: storage reference '{storage_reference}' resolves outside evidence root.")
 
     return abs_path

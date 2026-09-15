@@ -9,26 +9,38 @@ import logging
 from datetime import datetime, timezone
 from typing import Optional, List, Tuple, Dict, Any
 
-from db_models import (
-    CaseRecord,
-    EvidenceRecord,
-    AnalysisRecord,
-    CaseDetailResponse,
-    CaseListResponse,
-)
-from repositories import (
-    CaseRepository,
-    EvidenceRepository,
-    AnalysisRepository,
-    calculate_sha256,
-)
-from evidence_storage import (
-    save_evidence,
-    read_evidence,
-    verify_evidence_file,
-)
-from analyzer import analyze_email_bytes_frontend, generate_case_id
-from blockchain_service import get_blockchain_service
+try:
+    from .db_models import (
+        CaseRecord,
+        EvidenceRecord,
+        AnalysisRecord,
+        CaseDetailResponse,
+        CaseListResponse,
+    )
+    from .repositories import (
+        CaseRepository,
+        EvidenceRepository,
+        AnalysisRepository,
+        calculate_sha256,
+    )
+    from .evidence_storage import (
+        save_evidence,
+        read_evidence,
+        verify_evidence_file,
+    )
+    from .analyzer import analyze_email_bytes_frontend, generate_case_id
+    from .blockchain_service import get_blockchain_service
+except ImportError:
+    from db_models import (
+        CaseRecord, EvidenceRecord, AnalysisRecord, CaseListResponse,
+        CaseDetailResponse, EvidenceResponse
+    )
+    from repositories import (
+        CaseRepository, EvidenceRepository, AnalysisRepository, calculate_sha256
+    )
+    from evidence_storage import save_evidence, read_evidence, verify_evidence_file
+    from analyzer import analyze_email_bytes_frontend, generate_case_id
+    from blockchain_service import get_blockchain_service
 
 logger = logging.getLogger("backend.case_service")
 

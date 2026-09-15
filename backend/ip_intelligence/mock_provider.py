@@ -3,8 +3,8 @@ Mock IP Intelligence Provider for Local Testing and Development.
 Returns clearly labeled synthetic/simulated infrastructure data.
 """
 
-from ip_intelligence.provider import BaseIPProvider
-from ip_intelligence.models import IPIntelligenceResult
+from .provider import BaseIPProvider
+from .models import IPIntelligenceResult
 
 # Synthetic demo catalog for well-known test IPs
 KNOWN_MOCK_PROFILES = {

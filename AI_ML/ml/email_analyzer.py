@@ -31,7 +31,7 @@ class EmailAnalyzer:
         result = analyzer.analyze_email(parsed_email_dict)
     """
 
-    def __init__(self, config_path: str = "configs/ml.yaml"):
+    def __init__(self, config_path: str | None = None):
         self.config = config.load_config(config_path)
         self.classifier = Classifier()
         self.text_features = TextFeatures()

@@ -6,9 +6,12 @@ Coordinates caching, special address bypass (RFC1918/Loopback/Documentation), an
 from typing import List, Dict, Optional
 import ipaddress
 
-from ip_intelligence.models import IPIntelligenceResult
-from ip_intelligence.provider import BaseIPProvider, get_ip_provider
-from relay_parser import classify_ip_address
+from .models import IPIntelligenceResult
+from .provider import BaseIPProvider, get_ip_provider
+try:
+    from ..relay_parser import classify_ip_address
+except ImportError:
+    from relay_parser import classify_ip_address
 
 
 class IPIntelligenceService:

@@ -9,21 +9,36 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 
-from models import (
+try:
+    from .models import (
     EmailAnalysisResponse,
     AnalysisMetadata,
     EmailMetadata,
     AuthResults,
     IOCs,
     RiskAssessment
-)
-from header_parser import parse_email_headers
-from relay_parser import parse_relay_path
-from ioc_extractor import extract_iocs
-from risk_engine import calculate_risk
-from ip_intelligence import IPIntelligenceService
-from domain_intelligence import DomainIntelligenceService
-from ml_bridge import analyze_with_ml
+    )
+    from .header_parser import parse_email_headers
+    from .relay_parser import parse_relay_path
+    from .ioc_extractor import extract_iocs
+    from .risk_engine import calculate_risk
+except ImportError:
+    from models import (
+        EmailMetadata, AuthResults, IOCs, RelayHop, RiskAssessment,
+        AnalysisMetadata, EmailAnalysisResponse
+    )
+    from header_parser import parse_email_headers
+    from relay_parser import parse_relay_path
+    from ioc_extractor import extract_iocs
+    from risk_engine import calculate_risk
+try:
+    from .ip_intelligence import IPIntelligenceService
+    from .domain_intelligence import DomainIntelligenceService
+    from .ml_bridge import analyze_with_ml
+except ImportError:
+    from ip_intelligence import IPIntelligenceService
+    from domain_intelligence import DomainIntelligenceService
+    from ml_bridge import analyze_with_ml
 
 PARSER_VERSION = "1.0.0-ml-integrated"
 
