@@ -1,30 +1,56 @@
-@"
-# ML datasets - DO NOT COMMIT
-AI_ML/data/
+# --- Node / Frontend ---
+**/node_modules/
+**/.next/
+out/
+dist/
+build/
+npm-debug.log*
 
-# Trained models - DO NOT COMMIT
-AI_ML/models/
-
-# Python cache
-__pycache__/
+# --- Python ---
 **/__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-# Test/tool caches
-.pytest_cache/
-**/.pytest_cache/
-
-# Virtual environments
+*.py[cod]
+*.egg-info/
 .venv/
 venv/
 env/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
 
-# Environment/secrets
+# --- Secrets (keep examples!) ---
 .env
-*.env
+.env.local
+.env.*.local
+!.env.example
+!**/.env.example
 
-# Jupyter
-.ipynb_checkpoints/
-"@ | Set-Content -Encoding UTF8 .gitignore
+# --- Hardhat / Blockchain ---
+blockchain/cache/
+blockchain/artifacts/
+blockchain/typechain-types/
+blockchain/coverage/
+coverage.json
+
+# --- ML weights & datasets (too big for git) ---
+*.onnx
+*.pt
+*.safetensors
+*.mmdb
+AI_ML/data/raw/
+AI_ML/data/processed/*.jsonl
+AI_ML/data/synthetic/*.jsonl
+hf_cache/
+transformers_cache/
+
+# --- Runtime data ---
+*.db
+*.sqlite3
+backend/cache/
+data/evidence/
+
+# --- OS / Editor ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
